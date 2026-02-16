@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Attendance: {{ student.first_name }} {{ student.last_name }}</h1>
+
+<form method="get">
+    <label>Month:</label>
+    <select name="month">
+        <option value="">All</option>
+        <option value="1" {% if selected_month == '1' %}selected{% endif %}>1</option>
+        <option value="2" {% if selected_month == '2' %}selected{% endif %}>2</option>
+        <option value="3" {% if selected_month == '3' %}selected{% endif %}>3</option>
+        <option value="4" {% if selected_month == '4' %}selected{% endif %}>4</option>
+        <option value="5" {% if selected_month == '5' %}selected{% endif %}>5</option>
+        <option value="6" {% if selected_month == '6' %}selected{% endif %}>6</option>
+        <option value="7" {% if selected_month == '7' %}selected{% endif %}>7</option>
+        <option value="8" {% if selected_month == '8' %}selected{% endif %}>8</option>
+        <option value="9" {% if selected_month == '9' %}selected{% endif %}>9</option>
+        <option value="10" {% if selected_month == '10' %}selected{% endif %}>10</option>
+        <option value="11" {% if selected_month == '11' %}selected{% endif %}>11</option>
+        <option value="12" {% if selected_month == '12' %}selected{% endif %}>12</option>
+    </select>
+    <button type="submit">Filter</button>
+</form>
+
+<div class="card">
+    <p><strong>Total Days:</strong> {{ total_days }}</p>
+    <p><strong>Present:</strong> {{ present_days }}</p>
+    <p><strong>Absent:</strong> {{ absent_days }}</p>
+    <p><strong>Attendance %:</strong> {{ percentage }}</p>
+</div>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th>Date</th>
+        <th>Status</th>
+    </tr>
+    {% for row in attendance_rows %}
+    <tr>
+        <td>{{ row.date }}</td>
+        <td>{{ row.status|title }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="2">No attendance records found.</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from apps.core.schools.models import School
 from apps.core.academic_sessions.models import AcademicSession
@@ -39,10 +40,22 @@ class Student(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+    parent_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='linked_students',
+        limit_choices_to={'role': 'parent'}
+    )
 
 
     def __str__(self):
         return f"{self.admission_number} - {self.first_name}"
+
+    @property
+    def name(self):
+        return f"{self.first_name} {self.last_name}".strip()
 
 
 # Session-wise enrollment
@@ -90,3 +103,20 @@ class StudentMark(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.subject}"
+
+
+class GradeScale(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    objects = SchoolManager()
+
+    grade_name = models.CharField(max_length=10)  # A1, A2, B1, etc.
+    min_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    max_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    remarks = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        unique_together = ('school', 'grade_name')
+        ordering = ['-min_percentage']
+
+    def __str__(self):
+        return f"{self.grade_name} ({self.min_percentage}-{self.max_percentage})"

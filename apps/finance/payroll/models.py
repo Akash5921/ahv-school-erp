@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+
 from apps.core.schools.models import School
 from apps.core.academic_sessions.models import AcademicSession
 from apps.academics.staff.models import Staff
@@ -26,15 +28,18 @@ class SalaryPayment(models.Model):
     payment_date = models.DateField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
         super().save(*args, **kwargs)
 
-        Ledger.objects.create(
-            school=self.salary_structure.school,
-            academic_session=self.academic_session,
-            entry_type='expense',
-            description=f"Salary paid to {self.salary_structure.staff.first_name}",
-            amount=self.amount_paid
-        )
+        if is_new:
+            Ledger.objects.create(
+                school=self.salary_structure.school,
+                academic_session=self.academic_session,
+                entry_type='expense',
+                description=f"Salary paid to {self.salary_structure.staff.name}",
+                amount=self.amount_paid,
+                transaction_date=timezone.now().date(),
+            )
 
     def __str__(self):
         return f"{self.salary_structure.staff.first_name} - {self.month}"

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Staff Members</h2>
+<a href="{% url 'staff_create' %}">Add Staff</a>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Staff ID</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Active</th>
+        <th>Portal User</th>
+        <th>Actions</th>
+    </tr>
+    {% for staff in staff_members %}
+    <tr>
+        <td>{{ staff.staff_id }}</td>
+        <td>{{ staff.first_name }} {{ staff.last_name }}</td>
+        <td>{{ staff.staff_type|title }}</td>
+        <td>{{ staff.phone|default:'-' }}</td>
+        <td>{{ staff.email|default:'-' }}</td>
+        <td>{% if staff.is_active %}Yes{% else %}No{% endif %}</td>
+        <td>{% if staff.user %}{{ staff.user.username }}{% else %}-{% endif %}</td>
+        <td>
+            <a href="{% url 'staff_update' staff.id %}">Edit</a> |
+            <a href="{% url 'staff_toggle_active' staff.id %}">
+                {% if staff.is_active %}Deactivate{% else %}Activate{% endif %}
+            </a>
+            {% if not staff.user %}
+                | <a href="{% url 'staff_assign_user' staff.id %}">Create Login</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

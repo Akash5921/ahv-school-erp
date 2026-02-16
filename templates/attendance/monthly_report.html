@@ -9,22 +9,31 @@
     <select name="class">
         <option value="">Select Class</option>
         {% for c in classes %}
-            <option value="{{ c.id }}">{{ c.name }}</option>
+            <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
     </select>
 
     <select name="section">
         <option value="">Select Section</option>
         {% for s in sections %}
-            <option value="{{ s.id }}">{{ s.name }}</option>
+            <option value="{{ s.id }}" {% if selected_section == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
         {% endfor %}
     </select>
 
     <select name="month">
         <option value="">Select Month</option>
-        {% for m in "123456789101112"|make_list %}
-            <option value="{{ m }}">{{ m }}</option>
-        {% endfor %}
+        <option value="1" {% if selected_month == '1' %}selected{% endif %}>1</option>
+        <option value="2" {% if selected_month == '2' %}selected{% endif %}>2</option>
+        <option value="3" {% if selected_month == '3' %}selected{% endif %}>3</option>
+        <option value="4" {% if selected_month == '4' %}selected{% endif %}>4</option>
+        <option value="5" {% if selected_month == '5' %}selected{% endif %}>5</option>
+        <option value="6" {% if selected_month == '6' %}selected{% endif %}>6</option>
+        <option value="7" {% if selected_month == '7' %}selected{% endif %}>7</option>
+        <option value="8" {% if selected_month == '8' %}selected{% endif %}>8</option>
+        <option value="9" {% if selected_month == '9' %}selected{% endif %}>9</option>
+        <option value="10" {% if selected_month == '10' %}selected{% endif %}>10</option>
+        <option value="11" {% if selected_month == '11' %}selected{% endif %}>11</option>
+        <option value="12" {% if selected_month == '12' %}selected{% endif %}>12</option>
     </select>
 
     <button type="submit">Generate Report</button>

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Create Login For Staff</h2>
+<p><strong>Staff:</strong> {{ staff_member.first_name }} {{ staff_member.last_name }} ({{ staff_member.staff_id }})</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create User</button>
+</form>
+
+{% endblock %}

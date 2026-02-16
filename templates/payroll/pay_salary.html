@@ -3,27 +3,31 @@
 {% block content %}
 <h1>Pay Staff Salary</h1>
 
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
 
-        <label>Staff:</label>
-        <select name="staff" required>
-            {% for staff in staff_members %}
-            <option value="{{ staff.id }}">
-                {{ staff.name }}
+        <label>Staff Salary Structure:</label>
+        <select name="salary_structure" required>
+            {% for item in salary_structures %}
+            <option value="{{ item.id }}">
+                {{ item.staff.first_name }} {{ item.staff.last_name }} - Default: {{ item.monthly_salary }}
             </option>
             {% endfor %}
         </select>
 
         <br><br>
 
-        <label>Amount:</label>
-        <input type="number" name="amount" required>
+        <label>Amount (optional, blank uses default monthly salary):</label>
+        <input type="number" step="0.01" name="amount">
 
         <br><br>
 
-        <label>Note:</label>
-        <textarea name="note"></textarea>
+        <label>Month:</label>
+        <input type="text" name="month" placeholder="Example: February 2026">
 
         <br><br>
 

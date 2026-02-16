@@ -44,4 +44,4 @@ class FeePayment(models.Model):
     note = models.TextField(blank=True)
 
     def __str__(self):
-        return f"{self.student.name} - {self.amount}"
+        return f"{self.student.first_name} - {self.amount}"

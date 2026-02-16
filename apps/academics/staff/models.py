@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from apps.core.schools.models import School
 from apps.core.utils.managers import SchoolManager
 
@@ -25,8 +26,19 @@ class Staff(models.Model):
 
     joining_date = models.DateField()
     is_active = models.BooleanField(default=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='staff_profile'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.first_name} ({self.staff_type})"
+
+    @property
+    def name(self):
+        return f"{self.first_name} {self.last_name}".strip()

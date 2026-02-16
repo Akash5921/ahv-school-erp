@@ -3,18 +3,15 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 
 from apps.academics.students.models import Student
-from apps.academics.attendance.models import StudentAttendance
 from apps.finance.accounts.models import Ledger
 from apps.academics.staff.models import Staff
+from apps.core.users.decorators import role_required
+
 
 @login_required
+@role_required(['schooladmin', 'accountant'])
 def dashboard(request):
-    user = request.user
-
-    if user.role not in ['admin', 'accountant']:
-        return render(request, 'reports/forbidden.html')
-
-    school = user.school
+    school = request.user.school
 
     total_students = Student.objects.filter(school=school).count()
     total_staff = Staff.objects.filter(school=school).count()

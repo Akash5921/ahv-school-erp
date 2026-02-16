@@ -66,9 +66,15 @@
 
         {% if request.user.role == 'schooladmin' %}
             <a href="{% url 'school_dashboard' %}">Dashboard</a>
+            <a href="{% url 'session_list' %}">Academic Sessions</a>
             <a href="{% url 'student_list' %}">Manage Students</a>
+            <a href="{% url 'grade_scale_list' %}">Grade Scales</a>
+            <a href="{% url 'staff_list' %}">Manage Staff</a>
+            <a href="{% url 'mark_staff_attendance' %}">Staff Attendance</a>
+            <a href="{% url 'monthly_staff_report' %}">Staff Monthly Report</a>
             <a href="{% url 'class_list' %}">Manage Classes</a>
             <a href="{% url 'section_list' %}">Manage Sections</a>
+            <a href="{% url 'subject_list' %}">Manage Subjects</a>
 
 
         {% endif %}
@@ -77,6 +83,7 @@
             <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
             <a href="{% url 'mark_attendance' %}">Mark Attendance</a>
             <a href="{% url 'monthly_report' %}">Monthly Report</a>
+            <a href="{% url 'add_marks' %}">Add Marks</a>
         {% endif %}
 
         {% if request.user.role == 'accountant' %}
@@ -85,8 +92,18 @@
             <a href="{% url 'pay_salary' %}">Pay Salary</a>
         {% endif %}
 
+        {% if request.user.role == 'parent' %}
+            <a href="{% url 'parent_dashboard' %}">Dashboard</a>
+        {% endif %}
+
+        {% if request.user.role == 'staff' %}
+            <a href="{% url 'staff_dashboard' %}">Dashboard</a>
+        {% endif %}
+
         {% if request.user.role == 'superadmin' %}
             <a href="{% url 'admin:index' %}">Admin Panel</a>
+            <a href="{% url 'school_list' %}">Manage Schools</a>
+            <a href="{% url 'school_onboard' %}">Onboard School</a>
         {% endif %}
 
         <hr>

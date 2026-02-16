@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Schools</h1>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <a href="{% url 'school_onboard' %}">+ Onboard New School</a>
+</div>
+
+<div class="card">
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Current Session</th>
+        </tr>
+        {% for school in schools %}
+        <tr>
+            <td>{{ school.name }}</td>
+            <td>{{ school.email|default:'-' }}</td>
+            <td>{{ school.phone|default:'-' }}</td>
+            <td>{% if school.is_active %}Active{% else %}Inactive{% endif %}</td>
+            <td>{{ school.current_session|default:'-' }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No schools found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

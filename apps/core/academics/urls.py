@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     class_list, class_create, class_update, class_delete,
-    section_list, section_create, section_update, section_delete
+    section_list, section_create, section_update, section_delete,
+    subject_list, subject_create, subject_update, subject_delete
 )
 
 urlpatterns = [
@@ -14,4 +15,9 @@ urlpatterns = [
     path('sections/add/', section_create, name='section_create'),
     path('sections/<int:pk>/edit/', section_update, name='section_update'),
     path('sections/<int:pk>/delete/', section_delete, name='section_delete'),
+
+    path('subjects/', subject_list, name='subject_list'),
+    path('subjects/add/', subject_create, name='subject_create'),
+    path('subjects/<int:pk>/edit/', subject_update, name='subject_update'),
+    path('subjects/<int:pk>/delete/', subject_delete, name='subject_delete'),
 ]

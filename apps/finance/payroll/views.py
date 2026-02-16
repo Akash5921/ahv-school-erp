@@ -1,42 +1,70 @@
-from django.shortcuts import render, redirect
+from decimal import Decimal, InvalidOperation
+
 from django.contrib.auth.decorators import login_required
-from apps.academics.staff.models import Staff
-from apps.finance.payroll.models import SalaryPayment
-from apps.finance.accounts.models import Ledger
+from django.shortcuts import get_object_or_404, render, redirect
+from django.utils import timezone
+
+from apps.finance.payroll.models import SalaryPayment, SalaryStructure
+from apps.core.users.audit import log_audit_event
+from apps.core.users.decorators import role_required
 
 
 @login_required
+@role_required('accountant')
 def pay_salary(request):
-
-    if request.user.role != 'accountant':
-        return render(request, 'reports/forbidden.html')
-
-    staff_members = Staff.objects.filter(school=request.user.school)
+    school = request.user.school
+    salary_structures = SalaryStructure.objects.filter(
+        school=school,
+        staff__is_active=True
+    ).select_related('staff')
+    error = None
 
     if request.method == 'POST':
-        staff_id = request.POST.get('staff')
-        amount = request.POST.get('amount')
-        note = request.POST.get('note')
+        salary_structure_id = request.POST.get('salary_structure')
+        amount_raw = request.POST.get('amount', '')
+        month = request.POST.get('month', '').strip()
 
-        staff = Staff.objects.get(id=staff_id)
+        current_session = school.current_session
+        if not current_session:
+            error = 'No active academic session set for this school.'
+        else:
+            salary_structure = get_object_or_404(
+                SalaryStructure,
+                id=salary_structure_id,
+                school=school
+            )
 
-        SalaryPayment.objects.create(
-            staff=staff,
-            school=request.user.school,
-            amount=amount,
-            note=note
-        )
+            if not month:
+                month = timezone.now().strftime('%B %Y')
 
-        # Auto ledger entry (expense)
-        Ledger.objects.create(
-            school=request.user.school,
-            entry_type='expense',
-            amount=amount,
-            description=f"Salary paid to {staff.name}"
-        )
+            if amount_raw:
+                try:
+                    amount_paid = Decimal(amount_raw)
+                except InvalidOperation:
+                    amount_paid = Decimal('0')
+            else:
+                amount_paid = salary_structure.monthly_salary
 
-        return redirect('accountant_dashboard')
+            if amount_paid <= 0:
+                error = 'Salary amount must be greater than zero.'
+            else:
+                payment = SalaryPayment.objects.create(
+                    salary_structure=salary_structure,
+                    academic_session=current_session,
+                    month=month,
+                    amount_paid=amount_paid,
+                )
+
+                log_audit_event(
+                    request=request,
+                    action='salary.paid',
+                    school=school,
+                    target=payment,
+                    details=f"Staff={salary_structure.staff.id}, Amount={amount_paid}, Month={month}",
+                )
+                return redirect('accountant_dashboard')
 
     return render(request, 'payroll/pay_salary.html', {
-        'staff_members': staff_members
+        'salary_structures': salary_structures,
+        'error': error,
     })

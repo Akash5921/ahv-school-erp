@@ -3,6 +3,10 @@
 {% block content %} 
 <h1>Collect Student Fee</h1>
 
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
 
@@ -10,7 +14,7 @@
         <select name="student" required>
             {% for student in students %}
             <option value="{{ student.id }}">
-                {{ student.name }}
+                {{ student.first_name }} {{ student.last_name }}
             </option>
             {% endfor %}
         </select>

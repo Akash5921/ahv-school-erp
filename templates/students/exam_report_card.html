@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Exam Report Card</h2>
+    <p><strong>Student:</strong> {{ student.first_name }} {{ student.last_name }}</p>
+
+    <form method="get">
+        <label>Select Exam:</label>
+        <select name="exam">
+            <option value="">All Exams</option>
+            {% for exam in exam_types %}
+                <option value="{{ exam }}" {% if selected_exam == exam %}selected{% endif %}>{{ exam }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+
+    <table border="1" cellpadding="8" cellspacing="0" style="margin-top: 12px;">
+        <tr>
+            <th>Subject</th>
+            <th>Exam</th>
+            <th>Marks</th>
+            <th>Total</th>
+            <th>%</th>
+            <th>Grade</th>
+        </tr>
+        {% for item in marks_data %}
+        <tr>
+            <td>{{ item.subject }}</td>
+            <td>{{ item.exam_type }}</td>
+            <td>{{ item.marks_obtained }}</td>
+            <td>{{ item.total_marks }}</td>
+            <td>{{ item.percentage }}</td>
+            <td>{{ item.grade }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No marks found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <strong>Total Obtained:</strong> {{ total_obtained }} <br>
+    <strong>Total Marks:</strong> {{ total_max }} <br>
+    <strong>Overall Percentage:</strong> {{ overall_percentage }} % <br>
+    <strong>Overall Grade:</strong> {{ overall_grade }} <br>
+    <strong>Status:</strong> {{ status }}
+</div>
+
+{% endblock %}

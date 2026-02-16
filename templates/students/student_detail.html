@@ -4,11 +4,15 @@
 <h2>Student Profile</h2>
 
 <div class="card">
+    <p><strong>Admission Number:</strong> {{ student.admission_number }}</p>
     <p><strong>Name:</strong> {{ student.first_name }} {{ student.last_name }}</p>
     <p><strong>Class:</strong> {{ student.school_class }}</p>
     <p><strong>Section:</strong> {{ student.section }}</p>
-    <p><strong>Admission Date:</strong> {{ student.admission_date }}</p>
+    <p><strong>Date of Birth:</strong> {{ student.date_of_birth|default:'-' }}</p>
+    <p><strong>Gender:</strong> {{ student.gender|default:'-' }}</p>
 </div>
 
 <a href="{% url 'student_update' student.id %}">Edit</a>
+<a href="{% url 'enrollment_history' student.id %}" style="margin-left:10px;">Enrollment History</a>
+<a href="{% url 'exam_report_card' student.id %}" style="margin-left:10px;">Exam Report Card</a>
 {% endblock %}

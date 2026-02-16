@@ -1,8 +1,8 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from apps.core.users.decorators import role_required
-from .models import SchoolClass, Section
-from .forms import SchoolClassForm, SectionForm
+from .models import SchoolClass, Section, Subject
+from .forms import SchoolClassForm, SectionForm, SubjectForm
 
 
 @login_required
@@ -83,6 +83,9 @@ def section_list(request):
 def section_create(request):
     if request.method == 'POST':
         form = SectionForm(request.POST)
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
         if form.is_valid():
             section = form.save(commit=False)
 
@@ -94,6 +97,9 @@ def section_create(request):
             return redirect('section_list')
     else:
         form = SectionForm()
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
 
     return render(request, 'academics/section_form.html', {
         'form': form
@@ -111,11 +117,17 @@ def section_update(request, pk):
 
     if request.method == 'POST':
         form = SectionForm(request.POST, instance=section)
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
         if form.is_valid():
             form.save()
             return redirect('section_list')
     else:
         form = SectionForm(instance=section)
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
 
     return render(request, 'academics/section_form.html', {
         'form': form
@@ -133,3 +145,78 @@ def section_delete(request, pk):
 
     section.delete()
     return redirect('section_list')
+
+
+@login_required
+@role_required('schooladmin')
+def subject_list(request):
+    subjects = Subject.objects.filter(
+        school=request.user.school
+    ).select_related('school_class').order_by('school_class__name', 'name')
+    return render(request, 'academics/subject_list.html', {
+        'subjects': subjects
+    })
+
+
+@login_required
+@role_required('schooladmin')
+def subject_create(request):
+    if request.method == 'POST':
+        form = SubjectForm(request.POST)
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
+        if form.is_valid():
+            subject = form.save(commit=False)
+            subject.school = request.user.school
+            subject.save()
+            return redirect('subject_list')
+    else:
+        form = SubjectForm()
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
+
+    return render(request, 'academics/subject_form.html', {
+        'form': form
+    })
+
+
+@login_required
+@role_required('schooladmin')
+def subject_update(request, pk):
+    subject = get_object_or_404(
+        Subject,
+        pk=pk,
+        school=request.user.school
+    )
+
+    if request.method == 'POST':
+        form = SubjectForm(request.POST, instance=subject)
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
+        if form.is_valid():
+            form.save()
+            return redirect('subject_list')
+    else:
+        form = SubjectForm(instance=subject)
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(
+            school=request.user.school
+        )
+
+    return render(request, 'academics/subject_form.html', {
+        'form': form
+    })
+
+
+@login_required
+@role_required('schooladmin')
+def subject_delete(request, pk):
+    subject = get_object_or_404(
+        Subject,
+        pk=pk,
+        school=request.user.school
+    )
+    subject.delete()
+    return redirect('subject_list')

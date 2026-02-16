@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Monthly Staff Attendance Report</h2>
+
+<form method="get">
+    <label>Month:</label>
+    <select name="month">
+        <option value="">Select Month</option>
+        <option value="1" {% if selected_month == '1' %}selected{% endif %}>1</option>
+        <option value="2" {% if selected_month == '2' %}selected{% endif %}>2</option>
+        <option value="3" {% if selected_month == '3' %}selected{% endif %}>3</option>
+        <option value="4" {% if selected_month == '4' %}selected{% endif %}>4</option>
+        <option value="5" {% if selected_month == '5' %}selected{% endif %}>5</option>
+        <option value="6" {% if selected_month == '6' %}selected{% endif %}>6</option>
+        <option value="7" {% if selected_month == '7' %}selected{% endif %}>7</option>
+        <option value="8" {% if selected_month == '8' %}selected{% endif %}>8</option>
+        <option value="9" {% if selected_month == '9' %}selected{% endif %}>9</option>
+        <option value="10" {% if selected_month == '10' %}selected{% endif %}>10</option>
+        <option value="11" {% if selected_month == '11' %}selected{% endif %}>11</option>
+        <option value="12" {% if selected_month == '12' %}selected{% endif %}>12</option>
+    </select>
+    <button type="submit">Generate</button>
+</form>
+
+{% if report_data %}
+<table border="1" cellpadding="6" cellspacing="0" style="margin-top:12px;">
+    <tr>
+        <th>Staff</th>
+        <th>Present</th>
+        <th>Absent</th>
+        <th>Late</th>
+        <th>Total Days</th>
+        <th>Attendance %</th>
+    </tr>
+    {% for row in report_data %}
+    <tr>
+        <td>{{ row.staff.first_name }} {{ row.staff.last_name }}</td>
+        <td>{{ row.present_days }}</td>
+        <td>{{ row.absent_days }}</td>
+        <td>{{ row.late_days }}</td>
+        <td>{{ row.total_days }}</td>
+        <td>{{ row.percentage }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

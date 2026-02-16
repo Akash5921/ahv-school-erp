@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Subjects</h2>
+
+<a href="{% url 'subject_create' %}">Add Subject</a>
+
+<table border="1" cellpadding="10">
+<tr>
+    <th>Name</th>
+    <th>Code</th>
+    <th>Class</th>
+    <th>Actions</th>
+</tr>
+
+{% for subject in subjects %}
+<tr>
+    <td>{{ subject.name }}</td>
+    <td>{{ subject.code|default:'-' }}</td>
+    <td>{{ subject.school_class.name }}</td>
+    <td>
+        <a href="{% url 'subject_update' subject.id %}">Edit</a>
+        <a href="{% url 'subject_delete' subject.id %}">Delete</a>
+    </td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}

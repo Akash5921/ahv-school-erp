@@ -4,11 +4,15 @@
 <div class="card">
     <h2>Add Student Marks</h2>
 
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
 
         <label>Student:</label>
-        <select name="student">
+        <select name="student" id="studentSelect">
             {% for student in students %}
                 <option value="{{ student.id }}">
                     {{ student.first_name }} {{ student.last_name }}
@@ -17,7 +21,7 @@
         </select>
 
         <label>Subject:</label>
-        <input type="text" name="subject">
+        <select name="subject" id="subjectSelect"></select>
 
         <label>Marks Obtained:</label>
         <input type="number" name="marks">
@@ -32,5 +36,27 @@
         <button type="submit">Save Marks</button>
     </form>
 </div>
+
+{{ subject_map|json_script:"subjectMapData" }}
+<script>
+    const studentSelect = document.getElementById('studentSelect');
+    const subjectSelect = document.getElementById('subjectSelect');
+    const subjectMap = JSON.parse(document.getElementById('subjectMapData').textContent);
+
+    function loadSubjects() {
+        const selectedStudentId = studentSelect.value;
+        const subjects = subjectMap[selectedStudentId] || [];
+        subjectSelect.innerHTML = '';
+        subjects.forEach((subjectName) => {
+            const option = document.createElement('option');
+            option.value = subjectName;
+            option.textContent = subjectName;
+            subjectSelect.appendChild(option);
+        });
+    }
+
+    studentSelect.addEventListener('change', loadSubjects);
+    loadSubjects();
+</script>
 
 {% endblock %}
