@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Report Card</h2>
+
+    <h3>{{ student.first_name }} {{ student.last_name }}</h3>
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Subject</th>
+            <th>Marks</th>
+            <th>Total</th>
+            <th>%</th>
+        </tr>
+
+        {% for mark in marks %}
+        <tr>
+            <td>{{ mark.subject }}</td>
+            <td>{{ mark.marks_obtained }}</td>
+            <td>{{ mark.total_marks }}</td>
+            <td>{{ mark.percentage }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+
+    <strong>Total Obtained:</strong> {{ total_obtained }} <br>
+    <strong>Total Marks:</strong> {{ total_max }} <br>
+    <strong>Overall Percentage:</strong> {{ percentage }} % <br>
+    <strong>Status:</strong> {{ status }}
+
+</div>
+
+{% endblock %}

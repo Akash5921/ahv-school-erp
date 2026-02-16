@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AH&V School ERP</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 230px;
+            background: #1e293b;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            margin: 8px 0;
+            padding: 6px;
+            border-radius: 4px;
+        }
+
+        .sidebar a:hover {
+            background: #334155;
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            background: #f1f5f9;
+        }
+
+        .topbar {
+            background: white;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>AH&V ERP</h2>
+
+        {% if request.user.role == 'schooladmin' %}
+            <a href="{% url 'school_dashboard' %}">Dashboard</a>
+            <a href="{% url 'student_list' %}">Manage Students</a>
+            <a href="{% url 'class_list' %}">Manage Classes</a>
+            <a href="{% url 'section_list' %}">Manage Sections</a>
+
+
+        {% endif %}
+
+        {% if request.user.role == 'teacher' %}
+            <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
+            <a href="{% url 'mark_attendance' %}">Mark Attendance</a>
+            <a href="{% url 'monthly_report' %}">Monthly Report</a>
+        {% endif %}
+
+        {% if request.user.role == 'accountant' %}
+            <a href="{% url 'accountant_dashboard' %}">Dashboard</a>
+            <a href="{% url 'collect_fee' %}">Collect Fee</a>
+            <a href="{% url 'pay_salary' %}">Pay Salary</a>
+        {% endif %}
+
+        {% if request.user.role == 'superadmin' %}
+            <a href="{% url 'admin:index' %}">Admin Panel</a>
+        {% endif %}
+
+        <hr>
+        <form method="post" action="{% url 'logout' %}" style="margin-top:15px;">
+            {% csrf_token %}
+            <button type="submit" style="
+                width:100%;
+                padding:6px;
+                background:#dc2626;
+                color:white;
+                border:none;
+                border-radius:4px;
+                cursor:pointer;
+            ">
+                Logout
+            </button>
+        </form>
+    </div>
+
+    <div class="content">
+
+        <div class="topbar">
+            <div>
+                Welcome {{ request.user.username }}
+            </div>
+            <div>
+                Role: {{ request.user.role|title }}
+            </div>
+        </div>
+
+        {% block content %}
+        {% endblock %}
+
+    </div>
+
+</body>
+</html>

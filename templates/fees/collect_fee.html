@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %} 
+<h1>Collect Student Fee</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Student:</label>
+        <select name="student" required>
+            {% for student in students %}
+            <option value="{{ student.id }}">
+                {{ student.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+
+        <label>Amount:</label>
+        <input type="number" name="amount" required>
+
+        <br><br>
+
+        <label>Note:</label>
+        <textarea name="note"></textarea>
+
+        <br><br>
+
+        <button type="submit">Save Payment</button>
+    </form>
+{% endblock %}

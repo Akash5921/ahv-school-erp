@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2 class="mb-4">School Admin Dashboard</h2>
+
+    <div class="row">
+
+        <!-- Total Students -->
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3 shadow">
+                <div class="card-body">
+                    <h5>Total Students</h5>
+                    <h3>{{ total_students }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Teachers -->
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3 shadow">
+                <div class="card-body">
+                    <h5>Total Teachers</h5>
+                    <h3>{{ total_teachers }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Classes -->
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3 shadow">
+                <div class="card-body">
+                    <h5>Total Classes</h5>
+                    <h3>{{ total_classes }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Sections -->
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3 shadow">
+                <div class="card-body">
+                    <h5>Total Sections</h5>
+                    <h3>{{ total_sections }}</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="row mt-5">
+
+    <!-- Student Chart -->
+    <div class="col-md-6">
+        <div class="card shadow p-3">
+            <h5>Students Overview</h5>
+            <canvas id="studentsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Fee Chart -->
+    <div class="col-md-6">
+        <div class="card shadow p-3">
+            <h5>Monthly Fee Collection</h5>
+            <canvas id="feeChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const studentsChart = new Chart(document.getElementById('studentsChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ months|safe }},
+            datasets: [{
+                label: 'Students',
+                data: {{ student_data|safe }},
+                backgroundColor: '#0d6efd'
+            }]
+        }
+    });
+
+    const feeChart = new Chart(document.getElementById('feeChart'), {
+        type: 'line',
+        data: {
+            labels: {{ months|safe }},
+            datasets: [{
+                label: 'Fees',
+                data: {{ fee_data|safe }},
+                borderColor: '#198754',
+                fill: false
+            }]
+        }
+    });
+</script>
+
+
+
+{% endblock %}

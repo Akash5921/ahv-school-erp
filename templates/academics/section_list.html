@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Sections</h2>
+
+<a href="{% url 'section_create' %}">Add Section</a>
+
+<table border="1" cellpadding="10">
+<tr>
+    <th>Name</th>
+    <th>Class</th>
+    <th>Actions</th>
+</tr>
+
+{% for s in sections %}
+<tr>
+    <td>{{ s.name }}</td>
+    <td>{{ s.school_class.name }}</td>
+    <td>
+        <a href="{% url 'section_update' s.id %}">Edit</a>
+        <a href="{% url 'section_delete' s.id %}">Delete</a>
+    </td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}

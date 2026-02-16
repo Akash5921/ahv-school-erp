@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Monthly Attendance Report</h2>
+
+<form method="get">
+
+    <select name="class">
+        <option value="">Select Class</option>
+        {% for c in classes %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="section">
+        <option value="">Select Section</option>
+        {% for s in sections %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="month">
+        <option value="">Select Month</option>
+        {% for m in "123456789101112"|make_list %}
+            <option value="{{ m }}">{{ m }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Generate Report</button>
+</form>
+
+{% if report_data %}
+
+<table border="1" cellpadding="6" style="margin-top:20px;">
+    <tr>
+        <th>Student</th>
+        <th>Present Days</th>
+        <th>Total Days</th>
+        <th>Attendance %</th>
+    </tr>
+
+    {% for item in report_data %}
+    <tr>
+        <td>{{ item.student.first_name }} {{ item.student.last_name }}</td>
+        <td>{{ item.present_days }}</td>
+        <td>{{ item.total_days }}</td>
+        <td>{{ item.percentage }}%</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endif %}
+
+{% endblock %}

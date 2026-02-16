@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Accountant Dashboard</h1>
+
+    <div class="card">
+        <h3>Total Income</h3>
+        <p>₹ {{ total_income }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Total Expense</h3>
+        <p>₹ {{ total_expense }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Balance</h2>
+        <p>₹ {{ balance }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Monthly Income vs Expense</h3>
+        <canvas id="financeChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const ctx = document.getElementById('financeChart');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: {{ income_list|safe }},
+                        backgroundColor: 'green'
+                    },
+                    {
+                        label: 'Expense',
+                        data: {{ expense_list|safe }},
+                        backgroundColor: 'red'
+                    }
+                ]
+            }
+        });
+    </script>
+
+{% endblock %}

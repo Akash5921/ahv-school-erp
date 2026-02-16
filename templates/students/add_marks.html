@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Add Student Marks</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Student:</label>
+        <select name="student">
+            {% for student in students %}
+                <option value="{{ student.id }}">
+                    {{ student.first_name }} {{ student.last_name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Subject:</label>
+        <input type="text" name="subject">
+
+        <label>Marks Obtained:</label>
+        <input type="number" name="marks">
+
+        <label>Total Marks:</label>
+        <input type="number" name="total">
+
+        <label>Exam Type:</label>
+        <input type="text" name="exam">
+
+        <br><br>
+        <button type="submit">Save Marks</button>
+    </form>
+</div>
+
+{% endblock %}

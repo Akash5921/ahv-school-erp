@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Pay Staff Salary</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Staff:</label>
+        <select name="staff" required>
+            {% for staff in staff_members %}
+            <option value="{{ staff.id }}">
+                {{ staff.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+
+        <label>Amount:</label>
+        <input type="number" name="amount" required>
+
+        <br><br>
+
+        <label>Note:</label>
+        <textarea name="note"></textarea>
+
+        <br><br>
+
+        <button type="submit">Pay Salary</button>
+    </form>
+{% endblock %}

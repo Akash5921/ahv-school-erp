@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Mark Attendance</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<form method="get">
+    <select name="class">
+        <option value="">Select Class</option>
+        {% for c in classes %}
+            <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
+                {{ c.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <select name="section">
+        <option value="">Select Section</option>
+        {% for s in sections %}
+            <option value="{{ s.id }}" {% if selected_section == s.id|stringformat:"s" %}selected{% endif %}>
+                {{ s.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Load Students</button>
+</form>
+
+{% if students %}
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="class" value="{{ selected_class }}">
+    <input type="hidden" name="section" value="{{ selected_section }}">
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Student</th>
+            <th>Present</th>
+            <th>Absent</th>
+        </tr>
+
+        {% for student in students %}
+        <tr>
+            <td>{{ student.first_name }}</td>
+
+            <td>
+                <input type="radio" name="status_{{ student.id }}" value="present" required> Present
+                <input type="radio" name="status_{{ student.id }}" value="absent"> Absent
+            </td>
+        </tr>
+        {% endfor %}
+
+    </table>
+
+    <br>
+    <button type="submit">Save Attendance</button>
+</form>
+{% endif %}
+
+{% endblock %}

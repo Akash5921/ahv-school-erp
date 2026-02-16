@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Teacher Dashboard</h1>
+
+<div class="card">
+    <h3>Today's Summary</h3>
+    <p>Present: {{ present_count }}</p>
+    <p>Absent: {{ absent_count }}</p>
+</div>
+
+<div class="card">
+    <h3>Attendance Percentage</h3>
+
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Student</th>
+            <th>Attendance %</th>
+        </tr>
+
+        {% for item in attendance_summary %}
+        <tr>
+            <td>{{ item.student.name }}</td>
+            <td>{{ item.percentage }} %</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="card">
+    <h3>Monthly Attendance Overview</h3>
+    <canvas id="attendanceChart"></canvas>
+</div>
+
+<script>
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+    const attendanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+            datasets: [
+                {
+                    label: 'Present',
+                    data: {{ present_list|safe }},
+                },
+                {
+                    label: 'Absent',
+                    data: {{ absent_list|safe }},
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}
