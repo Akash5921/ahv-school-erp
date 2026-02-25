@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Manage Notices</h1>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Create Notice</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Notice</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Notice History</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Publish Time</th>
+            <th>Title</th>
+            <th>Target</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in notices %}
+        <tr>
+            <td>{{ row.publish_at }}</td>
+            <td>{{ row.title }}</td>
+            <td>{{ row.target_role|title }}</td>
+            <td>{{ row.priority|title }}</td>
+            <td>{% if row.is_published %}Published{% else %}Draft{% endif %}</td>
+            <td>
+                <form method="post" action="{% url 'notice_toggle_publish' row.id %}">
+                    {% csrf_token %}
+                    <button type="submit">
+                        {% if row.is_published %}Unpublish{% else %}Publish{% endif %}
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No notices created yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

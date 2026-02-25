@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Notices</h1>
+<p><strong>Unread:</strong> {{ unread_count }}</p>
+
+<div class="card">
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Time</th>
+            <th>Title</th>
+            <th>Priority</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.notice.publish_at }}</td>
+            <td>{{ row.notice.title }}</td>
+            <td>{{ row.notice.priority|title }}</td>
+            <td>{{ row.notice.message }}</td>
+            <td>{% if row.is_read %}Read{% else %}Unread{% endif %}</td>
+            <td>
+                {% if not row.is_read %}
+                <form method="post" action="{% url 'notice_mark_read' row.notice.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Mark as Read</button>
+                </form>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No notices available.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

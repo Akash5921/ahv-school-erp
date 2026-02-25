@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'apps.core',
     'apps.core.users.apps.UsersConfig',
     'apps.core.schools',
     'apps.core.academic_sessions',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     'apps.finance.payroll',
     'apps.assets.inventory',
     'apps.operations.transport',
+    'apps.operations.communication',
     'apps.operations.reports.apps.ReportsConfig',
 
 

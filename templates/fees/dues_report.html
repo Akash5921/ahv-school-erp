@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Student Dues Report</h1>
+
+<form method="get">
+    <label>Search Student:</label>
+    <input type="text" name="q" value="{{ query }}" placeholder="Name or admission no">
+    <button type="submit">Search</button>
+</form>
+
+<p><strong>Academic Session:</strong> {{ current_session.name|default:"Not Set" }}</p>
+
+<div class="card">
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Student</th>
+            <th>Admission No</th>
+            <th>Fee</th>
+            <th>Total</th>
+            <th>Concession</th>
+            <th>Net</th>
+            <th>Paid</th>
+            <th>Due</th>
+        </tr>
+        {% for row in due_rows %}
+        <tr>
+            <td>{{ row.student.first_name }} {{ row.student.last_name }}</td>
+            <td>{{ row.student.admission_number }}</td>
+            <td>{{ row.fee_structure.name }}</td>
+            <td>{{ row.total_amount }}</td>
+            <td>{{ row.concession_amount }}</td>
+            <td>{{ row.net_amount }}</td>
+            <td>{{ row.paid_amount }}</td>
+            <td>{{ row.due_amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8">No dues found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

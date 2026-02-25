@@ -1,13 +1,18 @@
 {% extends 'base.html' %}
 
-{% block content %} 
+{% block content %}
 <h1>School Dashboard</h1>
 
-    <p><strong>Total Students:</strong> {{ total_students }}</p>
-    <p><strong>Total Staff:</strong> {{ total_staff }}</p>
-    <p><strong>Total Income:</strong> ₹{{ total_income }}</p>
-    <p><strong>Total Expense:</strong> ₹{{ total_expense }}</p>
+<p><strong>Academic Session:</strong> {{ current_session.name|default:"Not Set" }}</p>
+<p><strong>Total Students:</strong> {{ total_students }}</p>
+<p><strong>Total Staff:</strong> {{ total_staff }}</p>
+<p><strong>Total Buses:</strong> {{ total_buses }}</p>
+<p><strong>Students Using Transport:</strong> {{ transport_students }}</p>
+<p><strong>Total Inventory Items:</strong> {{ total_inventory_items }}</p>
+<p><strong>Inventory Purchase Total:</strong> {{ inventory_purchase_total }}</p>
+<p><strong>Total Income:</strong> {{ total_income }}</p>
+<p><strong>Total Expense:</strong> {{ total_expense }}</p>
 
-    <hr>
-    <p>Logged in as: {{ request.user.username }} ({{ request.user.role }})</p>
+<hr>
+<p>Logged in as: {{ request.user.username }} ({{ request.user.role }})</p>
 {% endblock %}

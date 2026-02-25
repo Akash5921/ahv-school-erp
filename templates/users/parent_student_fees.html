@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Fee Status: {{ student.first_name }} {{ student.last_name }}</h1>
+<p><strong>Session:</strong> {{ current_session.name|default:"Not Set" }}</p>
+<p><strong>Total Due:</strong> {{ total_due }}</p>
+
+<div class="card">
+    <h3>Assigned Fees</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Fee Name</th>
+            <th>Class</th>
+            <th>Total</th>
+            <th>Concession</th>
+            <th>Paid</th>
+            <th>Due</th>
+        </tr>
+        {% for row in student_fee_rows %}
+        <tr>
+            <td>{{ row.fee_structure.name }}</td>
+            <td>{{ row.fee_structure.school_class.name }}</td>
+            <td>{{ row.total_amount }}</td>
+            <td>{{ row.concession_amount }}</td>
+            <td>{{ row.paid_amount }}</td>
+            <td>{{ row.due_amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No fees assigned for this session.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="card">
+    <h3>Payments</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Date</th>
+            <th>Receipt No</th>
+            <th>Amount</th>
+            <th>Action</th>
+        </tr>
+        {% for payment in payments %}
+        <tr>
+            <td>{{ payment.date }}</td>
+            <td>{{ payment.receipt_number|default:"-" }}</td>
+            <td>{{ payment.amount }}</td>
+            <td><a href="{% url 'fee_receipt' payment.id %}">View Receipt</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No payments found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

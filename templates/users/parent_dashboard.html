@@ -4,6 +4,11 @@
 <h1>Parent Dashboard</h1>
 
 <div class="card">
+    <p><strong>Total Fee Due:</strong> {{ total_due_amount }}</p>
+    <p><strong>Unread Notices:</strong> {{ unread_notice_count }}</p>
+</div>
+
+<div class="card">
     <h3>Linked Students</h3>
     <table border="1" cellpadding="8" cellspacing="0">
         <tr>
@@ -11,6 +16,7 @@
             <th>Class</th>
             <th>Section</th>
             <th>Today's Attendance</th>
+            <th>Current Fee Due</th>
             <th>Actions</th>
         </tr>
         {% for row in child_rows %}
@@ -19,16 +25,45 @@
             <td>{{ row.student.school_class.name|default:'-' }}</td>
             <td>{{ row.student.section.name|default:'-' }}</td>
             <td>{{ row.today_status|title }}</td>
+            <td>{{ row.due_amount }}</td>
             <td>
                 <a href="{% url 'parent_student_attendance' row.student.id %}">Attendance</a> |
-                <a href="{% url 'exam_report_card' row.student.id %}">Report Card</a>
+                <a href="{% url 'exam_report_card' row.student.id %}">Report Card</a> |
+                <a href="{% url 'parent_student_fees' row.student.id %}">Fees</a>
             </td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="5">No students linked to this parent account.</td>
+            <td colspan="6">No students linked to this parent account.</td>
         </tr>
         {% endfor %}
     </table>
+</div>
+
+<div class="card">
+    <h3>Recent Notices</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Time</th>
+            <th>Title</th>
+            <th>Priority</th>
+            <th>Status</th>
+        </tr>
+        {% for row in notice_rows %}
+        <tr>
+            <td>{{ row.notice.publish_at }}</td>
+            <td>{{ row.notice.title }}</td>
+            <td>{{ row.notice.priority|title }}</td>
+            <td>{% if row.is_read %}Read{% else %}Unread{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No notices available.</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <p style="margin-top: 12px;">
+        <a href="{% url 'notice_feed' %}">Open All Notices</a>
+    </p>
 </div>
 {% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Inventory Categories</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Add Category</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Category</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Category List</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Name</th>
+        </tr>
+        {% for category in categories %}
+        <tr>
+            <td>{{ category.name }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>No categories found for this school yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

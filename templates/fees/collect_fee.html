@@ -1,36 +1,74 @@
 {% extends 'base.html' %}
 
-{% block content %} 
+{% block content %}
 <h1>Collect Student Fee</h1>
 
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
 
+<div class="card">
+    <p><strong>Academic Session:</strong> {{ current_session.name|default:"Not Set" }}</p>
     <form method="post">
         {% csrf_token %}
-
-        <label>Student:</label>
-        <select name="student" required>
-            {% for student in students %}
-            <option value="{{ student.id }}">
-                {{ student.first_name }} {{ student.last_name }}
-            </option>
-            {% endfor %}
-        </select>
-
-        <br><br>
-
-        <label>Amount:</label>
-        <input type="number" name="amount" required>
-
-        <br><br>
-
-        <label>Note:</label>
-        <textarea name="note"></textarea>
-
-        <br><br>
-
+        {{ form.as_p }}
         <button type="submit">Save Payment</button>
     </form>
+</div>
+
+<div class="card">
+    <h3>Active Fee Records (for this school)</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Fee Name</th>
+            <th>Total</th>
+            <th>Concession</th>
+            <th>Paid</th>
+            <th>Due</th>
+        </tr>
+        {% for row in student_fee_rows %}
+        <tr>
+            <td>{{ row.student.first_name }} {{ row.student.last_name }}</td>
+            <td>{{ row.fee_structure.school_class.name }}</td>
+            <td>{{ row.fee_structure.name }}</td>
+            <td>{{ row.total_amount }}</td>
+            <td>{{ row.concession_amount }}</td>
+            <td>{{ row.paid_amount }}</td>
+            <td>{{ row.due_amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No student fee records available. Ask school admin to assign fees first.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="card">
+    <h3>Recent Payments</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Date</th>
+            <th>Receipt</th>
+            <th>Student</th>
+            <th>Amount</th>
+            <th>Action</th>
+        </tr>
+        {% for payment in recent_payments %}
+        <tr>
+            <td>{{ payment.date }}</td>
+            <td>{{ payment.receipt_number|default:"-" }}</td>
+            <td>{{ payment.student.first_name }} {{ payment.student.last_name }}</td>
+            <td>{{ payment.amount }}</td>
+            <td><a href="{% url 'fee_receipt' payment.id %}">View Receipt</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No payments yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 {% endblock %}

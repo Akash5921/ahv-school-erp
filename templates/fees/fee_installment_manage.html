@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Fee Installments</h1>
+<p>
+    <strong>Structure:</strong> {{ fee_structure.name }} |
+    <strong>Class:</strong> {{ fee_structure.school_class.name }} |
+    <strong>Session:</strong> {{ fee_structure.academic_session.name }}
+</p>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Add Installment</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Installment</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Installment List</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Title</th>
+            <th>Due Date</th>
+            <th>Amount</th>
+        </tr>
+        {% for row in installments %}
+        <tr>
+            <td>{{ row.title }}</td>
+            <td>{{ row.due_date }}</td>
+            <td>{{ row.amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No installments created yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

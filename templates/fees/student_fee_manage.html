@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Student Fee Assignment</h1>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Assign / Update Student Fee</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Student Fee</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Assigned Student Fees</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Student</th>
+            <th>Session</th>
+            <th>Class</th>
+            <th>Fee Name</th>
+            <th>Total</th>
+            <th>Concession</th>
+            <th>Paid</th>
+            <th>Due</th>
+            <th>Note</th>
+        </tr>
+        {% for row in student_fees %}
+        <tr>
+            <td>{{ row.student.first_name }} {{ row.student.last_name }}</td>
+            <td>{{ row.fee_structure.academic_session.name }}</td>
+            <td>{{ row.fee_structure.school_class.name }}</td>
+            <td>{{ row.fee_structure.name }}</td>
+            <td>{{ row.total_amount }}</td>
+            <td>{{ row.concession_amount }}</td>
+            <td>{{ row.paid_amount }}</td>
+            <td>{{ row.due_amount }}</td>
+            <td>{{ row.concession_note|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9">No student fees assigned.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

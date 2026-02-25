@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Student Transport Mapping</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <p><strong>Academic Session:</strong> {{ current_session.name|default:"Not Set" }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Assignment</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Mapped Students</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Student</th>
+            <th>Bus</th>
+            <th>Route</th>
+            <th>Action</th>
+        </tr>
+        {% for row in assignments %}
+        <tr>
+            <td>{{ row.student.first_name }} {{ row.student.last_name }}</td>
+            <td>{{ row.bus.bus_number }}</td>
+            <td>{{ row.route.name }}</td>
+            <td>
+                <form method="post" action="{% url 'transport_student_remove' row.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No student transport assignments yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

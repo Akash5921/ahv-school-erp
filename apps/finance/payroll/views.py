@@ -4,9 +4,56 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
+from apps.academics.staff.models import Staff
 from apps.finance.payroll.models import SalaryPayment, SalaryStructure
+from apps.finance.payroll.forms import SalaryStructureForm
 from apps.core.users.audit import log_audit_event
 from apps.core.users.decorators import role_required
+
+
+@login_required
+@role_required('schooladmin')
+def salary_structure_manage(request):
+    school = request.user.school
+    structures = SalaryStructure.objects.filter(
+        school=school
+    ).select_related('staff').order_by('staff__first_name', 'staff__last_name')
+    error = None
+
+    if request.method == 'POST':
+        form = SalaryStructureForm(request.POST)
+        form.fields['staff'].queryset = Staff.objects.filter(
+            school=school,
+            is_active=True
+        ).order_by('first_name', 'last_name')
+        if form.is_valid():
+            cleaned = form.cleaned_data
+            structure, _ = SalaryStructure.objects.update_or_create(
+                school=school,
+                staff=cleaned['staff'],
+                defaults={'monthly_salary': cleaned['monthly_salary']}
+            )
+            log_audit_event(
+                request=request,
+                action='salary.structure_saved',
+                school=school,
+                target=structure,
+                details=f"Staff={structure.staff_id}, Salary={structure.monthly_salary}",
+            )
+            return redirect('salary_structure_manage')
+        error = 'Please correct salary structure details.'
+    else:
+        form = SalaryStructureForm()
+        form.fields['staff'].queryset = Staff.objects.filter(
+            school=school,
+            is_active=True
+        ).order_by('first_name', 'last_name')
+
+    return render(request, 'payroll/salary_structure_manage.html', {
+        'structures': structures,
+        'form': form,
+        'error': error,
+    })
 
 
 @login_required
@@ -48,21 +95,29 @@ def pay_salary(request):
             if amount_paid <= 0:
                 error = 'Salary amount must be greater than zero.'
             else:
-                payment = SalaryPayment.objects.create(
+                existing = SalaryPayment.objects.filter(
                     salary_structure=salary_structure,
                     academic_session=current_session,
-                    month=month,
-                    amount_paid=amount_paid,
-                )
+                    month=month
+                ).first()
+                if existing:
+                    error = f'Salary already paid for {month}.'
+                else:
+                    payment = SalaryPayment.objects.create(
+                        salary_structure=salary_structure,
+                        academic_session=current_session,
+                        month=month,
+                        amount_paid=amount_paid,
+                    )
 
-                log_audit_event(
-                    request=request,
-                    action='salary.paid',
-                    school=school,
-                    target=payment,
-                    details=f"Staff={salary_structure.staff.id}, Amount={amount_paid}, Month={month}",
-                )
-                return redirect('accountant_dashboard')
+                    log_audit_event(
+                        request=request,
+                        action='salary.paid',
+                        school=school,
+                        target=payment,
+                        details=f"Staff={salary_structure.staff.id}, Amount={amount_paid}, Month={month}",
+                    )
+                    return redirect('accountant_dashboard')
 
     return render(request, 'payroll/pay_salary.html', {
         'salary_structures': salary_structures,

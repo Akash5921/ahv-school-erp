@@ -72,9 +72,21 @@
             <a href="{% url 'staff_list' %}">Manage Staff</a>
             <a href="{% url 'mark_staff_attendance' %}">Staff Attendance</a>
             <a href="{% url 'monthly_staff_report' %}">Staff Monthly Report</a>
+            <a href="{% url 'notice_manage' %}">Manage Notices</a>
             <a href="{% url 'class_list' %}">Manage Classes</a>
             <a href="{% url 'section_list' %}">Manage Sections</a>
             <a href="{% url 'subject_list' %}">Manage Subjects</a>
+            <a href="{% url 'fee_structure_list' %}">Fee Structures</a>
+            <a href="{% url 'student_fee_manage' %}">Student Fees</a>
+            <a href="{% url 'dues_report' %}">Student Dues</a>
+            <a href="{% url 'salary_structure_manage' %}">Salary Structures</a>
+            <a href="{% url 'inventory_category_list' %}">Inventory Categories</a>
+            <a href="{% url 'inventory_item_list' %}">Inventory Items</a>
+            <a href="{% url 'inventory_purchase' %}">Inventory Purchase</a>
+            <a href="{% url 'transport_bus_list' %}">Transport Buses</a>
+            <a href="{% url 'transport_route_list' %}">Transport Routes</a>
+            <a href="{% url 'transport_student_manage' %}">Student Transport</a>
+            <a href="{% url 'dashboard' %}">Reports Dashboard</a>
 
 
         {% endif %}
@@ -84,20 +96,26 @@
             <a href="{% url 'mark_attendance' %}">Mark Attendance</a>
             <a href="{% url 'monthly_report' %}">Monthly Report</a>
             <a href="{% url 'add_marks' %}">Add Marks</a>
+            <a href="{% url 'notice_feed' %}">Notices</a>
         {% endif %}
 
         {% if request.user.role == 'accountant' %}
             <a href="{% url 'accountant_dashboard' %}">Dashboard</a>
+            <a href="{% url 'dues_report' %}">Dues Report</a>
             <a href="{% url 'collect_fee' %}">Collect Fee</a>
             <a href="{% url 'pay_salary' %}">Pay Salary</a>
+            <a href="{% url 'notice_feed' %}">Notices</a>
+            <a href="{% url 'dashboard' %}">Reports Dashboard</a>
         {% endif %}
 
         {% if request.user.role == 'parent' %}
             <a href="{% url 'parent_dashboard' %}">Dashboard</a>
+            <a href="{% url 'notice_feed' %}">Notices</a>
         {% endif %}
 
         {% if request.user.role == 'staff' %}
             <a href="{% url 'staff_dashboard' %}">Dashboard</a>
+            <a href="{% url 'notice_feed' %}">Notices</a>
         {% endif %}
 
         {% if request.user.role == 'superadmin' %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Transport Buses</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Add Bus</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Bus</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Bus List</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Bus Number</th>
+            <th>Capacity</th>
+            <th>Driver</th>
+            <th>Action</th>
+        </tr>
+        {% for bus in buses %}
+        <tr>
+            <td>{{ bus.bus_number }}</td>
+            <td>{{ bus.capacity }}</td>
+            <td>{{ bus.driver.name|default:"-" }}</td>
+            <td>
+                <form method="post" action="{% url 'transport_bus_delete' bus.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No buses created yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

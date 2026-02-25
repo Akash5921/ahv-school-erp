@@ -20,8 +20,11 @@ urlpatterns = [
     path('sessions/', include('apps.core.academic_sessions.urls')),
     path('students/', include('apps.academics.students.urls')),
     path('academics/', include('apps.core.academics.urls')),
+    path('inventory/', include('apps.assets.inventory.urls')),
+    path('transport/', include('apps.operations.transport.urls')),
+    path('communication/', include('apps.operations.communication.urls')),
 
-    
+ 
 
     
 ]

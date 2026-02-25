@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Fee Receipt</h1>
+
+<div class="card">
+    <p><strong>Receipt No:</strong> {{ payment.receipt_number|default:"Pending" }}</p>
+    <p><strong>Date:</strong> {{ payment.date }}</p>
+    <p><strong>Student:</strong> {{ payment.student.first_name }} {{ payment.student.last_name }}</p>
+    <p><strong>Admission No:</strong> {{ payment.student.admission_number }}</p>
+    <p><strong>Amount Paid:</strong> {{ payment.amount }}</p>
+    <p><strong>Note:</strong> {{ payment.note|default:"-" }}</p>
+
+    {% if payment.student_fee %}
+    <hr>
+    <p><strong>Fee Structure:</strong> {{ payment.student_fee.fee_structure.name }}</p>
+    <p><strong>Class:</strong> {{ payment.student_fee.fee_structure.school_class.name }}</p>
+    <p><strong>Session:</strong> {{ payment.student_fee.fee_structure.academic_session.name }}</p>
+    <p><strong>Total:</strong> {{ payment.student_fee.total_amount }}</p>
+    <p><strong>Concession:</strong> {{ payment.student_fee.concession_amount }}</p>
+    <p><strong>Total Paid Till Now:</strong> {{ payment.student_fee.paid_amount }}</p>
+    <p><strong>Remaining Due:</strong> {{ payment.student_fee.due_amount }}</p>
+    {% endif %}
+</div>
+
+<a href="{% url 'collect_fee' %}">Back to Fee Collection</a>
+{% endblock %}

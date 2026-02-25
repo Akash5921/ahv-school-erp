@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Salary Structures</h1>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Set Monthly Salary</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Configured Staff Salaries</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Staff</th>
+            <th>Type</th>
+            <th>Monthly Salary</th>
+        </tr>
+        {% for row in structures %}
+        <tr>
+            <td>{{ row.staff.first_name }} {{ row.staff.last_name }}</td>
+            <td>{{ row.staff.staff_type|title }}</td>
+            <td>{{ row.monthly_salary }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No salary structures configured.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

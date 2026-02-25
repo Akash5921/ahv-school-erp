@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Transport Routes</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Add Route</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Route</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Route List</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Name</th>
+            <th>Start Point</th>
+            <th>End Point</th>
+            <th>Action</th>
+        </tr>
+        {% for route in routes %}
+        <tr>
+            <td>{{ route.name }}</td>
+            <td>{{ route.start_point }}</td>
+            <td>{{ route.end_point }}</td>
+            <td>
+                <form method="post" action="{% url 'transport_route_delete' route.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No routes created yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
