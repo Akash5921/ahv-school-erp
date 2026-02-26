@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Edit Timetable Entry</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Entry</button>
+        <a href="{% url 'timetable_manage' %}">Back</a>
+    </form>
+</div>
+
+{% endblock %}

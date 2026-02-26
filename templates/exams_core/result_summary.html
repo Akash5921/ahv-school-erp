@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Exam Result Summary</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <p>
+        <strong>Exam:</strong> {{ exam.exam_type.name }} |
+        <strong>Class:</strong> {{ exam.school_class.name }} |
+        <strong>Section:</strong> {{ exam.section.name|default:"All" }} |
+        <strong>Session:</strong> {{ exam.session.name }} |
+        <strong>Locked:</strong> {% if exam.is_locked %}Yes{% else %}No{% endif %}
+    </p>
+
+    <form method="post" action="{% url 'exam_result_generate' exam.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" {% if exam.is_locked %}disabled{% endif %}>Generate / Recalculate Results</button>
+    </form>
+    <form method="post" action="{% url 'exam_lock_core' exam.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" {% if exam.is_locked %}disabled{% endif %}>Lock Results</button>
+    </form>
+    <a href="{% url 'report_card_bulk_download' exam.id %}">Download Bulk Report Cards</a>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Admission No</th>
+                <th>Student</th>
+                <th>Total Marks</th>
+                <th>Percentage</th>
+                <th>Grade</th>
+                <th>Status</th>
+                <th>Attendance %</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in summaries %}
+                <tr>
+                    <td>{{ row.rank|default:"-" }}</td>
+                    <td>{{ row.student.admission_number }}</td>
+                    <td>{{ row.student.full_name }}</td>
+                    <td>{{ row.total_marks }}</td>
+                    <td>{{ row.percentage }}</td>
+                    <td>{{ row.grade|default:"-" }}</td>
+                    <td>{{ row.get_result_status_display }}</td>
+                    <td>{{ row.attendance_percentage|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'report_card_download' exam.id row.student.id %}">Report Card PDF</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9">No result summaries generated yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

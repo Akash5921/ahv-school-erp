@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Student Documents - {{ student.full_name }} ({{ student.admission_number }})</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <p><strong>Admission Type:</strong> {{ student.get_admission_type_display }}</p>
+    <p><strong>Finalized:</strong> {% if student.admission_finalized %}Yes{% else %}No{% endif %}</p>
+
+    {% if required_types %}
+        <h3>Mandatory Documents</h3>
+        <ul>
+            {% for doc_type in required_types %}
+                <li>
+                    {{ doc_type.name }}
+                    {% if doc_type.id in missing_required_ids %}
+                        (Pending)
+                    {% else %}
+                        (Approved)
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No mandatory documents configured for this admission type.</p>
+    {% endif %}
+
+    {% if not student.admission_finalized %}
+        <form method="post" action="{% url 'student_finalize_admission' student.id %}">
+            {% csrf_token %}
+            <button type="submit">Finalize Admission</button>
+        </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Upload Document</h3>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Upload</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Uploaded Documents</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Uploaded</th>
+                <th>Verified By</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for document in documents %}
+                <tr>
+                    <td>{{ document.document_type.name }}</td>
+                    <td>{{ document.get_status_display }}</td>
+                    <td>{{ document.uploaded_at }}</td>
+                    <td>{{ document.verified_by.username|default:"-" }}</td>
+                    <td>{{ document.remarks|default:"-" }}</td>
+                    <td>
+                        <a href="{{ document.file.url }}" target="_blank">View</a>
+                        <form method="post" action="{% url 'student_document_verify' student.id document.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="approved">
+                            <button type="submit">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'student_document_verify' student.id document.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="rejected">
+                            <button type="submit">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No documents uploaded.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <a href="{% url 'student_list' %}">Back to Students</a>
+</div>
+
+{% endblock %}

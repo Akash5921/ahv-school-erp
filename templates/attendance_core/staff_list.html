@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Staff Attendance</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        {{ filter_form.as_p }}
+        <button type="submit">Apply Filters</button>
+        <a href="{% url 'attendance_staff_mark' %}">Mark Attendance</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Session</th>
+                <th>Staff</th>
+                <th>Status</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Locked</th>
+                <th>Marked By</th>
+                <th>IP</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attendance in attendances %}
+                <tr>
+                    <td>{{ attendance.date }}</td>
+                    <td>{{ attendance.session.name|default:"-" }}</td>
+                    <td>{{ attendance.staff.employee_id }} - {{ attendance.staff.full_name }}</td>
+                    <td>{{ attendance.get_status_display }}</td>
+                    <td>{{ attendance.check_in_time|default:"-" }}</td>
+                    <td>{{ attendance.check_out_time|default:"-" }}</td>
+                    <td>{% if attendance.is_locked %}Yes{% else %}No{% endif %}</td>
+                    <td>{{ attendance.marked_by.username|default:"-" }}</td>
+                    <td>{{ attendance.ip_address|default:"-" }}</td>
+                    <td>
+                        {% if actor_is_admin %}
+                            <a href="{% url 'attendance_staff_edit' attendance.id %}">Edit</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10">No staff attendance records found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

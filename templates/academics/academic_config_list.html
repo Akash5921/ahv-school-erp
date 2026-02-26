@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Academic Configuration</h2>
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>
+                    {{ session.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'academic_config_create' %}">Add Config</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Total Periods/Day</th>
+                <th>Working Days</th>
+                <th>Grading</th>
+                <th>Attendance Type</th>
+                <th>Marks Decimal Allowed</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for config in configs %}
+            <tr>
+                <td>{{ config.session.name }}</td>
+                <td>{{ config.total_periods_per_day }}</td>
+                <td>{{ config.working_days|join:", " }}</td>
+                <td>{% if config.grading_enabled %}Enabled{% else %}Disabled{% endif %}</td>
+                <td>{{ config.attendance_type }}</td>
+                <td>{% if config.marks_decimal_allowed %}Yes{% else %}No{% endif %}</td>
+                <td>
+                    <a href="{% url 'academic_config_update' config.id %}">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">No academic config defined.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

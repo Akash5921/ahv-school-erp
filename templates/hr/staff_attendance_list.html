@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Staff Attendance</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Date:</label>
+        <input type="date" name="date" value="{{ selected_date }}">
+
+        {% if actor_is_admin %}
+            <label>Staff:</label>
+            <select name="staff">
+                <option value="">All</option>
+                {% for staff in staff_options %}
+                    <option value="{{ staff.id }}" {% if selected_staff == staff.id %}selected{% endif %}>{{ staff.employee_id }} - {{ staff.full_name }}</option>
+                {% endfor %}
+            </select>
+        {% endif %}
+
+        <button type="submit">Filter</button>
+        <a href="{% url 'hr_staff_attendance_mark' %}">Mark Attendance</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Staff</th>
+                <th>Status</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Marked By</th>
+                <th>IP</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attendance in attendances %}
+                <tr>
+                    <td>{{ attendance.date }}</td>
+                    <td>{{ attendance.staff.employee_id }} - {{ attendance.staff.full_name }}</td>
+                    <td>{{ attendance.get_status_display }}</td>
+                    <td>{{ attendance.check_in_time|default:"-" }}</td>
+                    <td>{{ attendance.check_out_time|default:"-" }}</td>
+                    <td>{{ attendance.marked_by.username|default:"-" }}</td>
+                    <td>{{ attendance.ip_address|default:"-" }}</td>
+                    <td>
+                        {% if actor_is_admin %}
+                            <a href="{% url 'hr_staff_attendance_edit' attendance.id %}">Edit</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No attendance records found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Teacher Subject Allocation</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>
+                    {{ session.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'hr_teacher_subject_create' %}">Add Allocation</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Teacher</th>
+                <th>Class</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in assignments %}
+                <tr>
+                    <td>{{ assignment.session.name }}</td>
+                    <td>{{ assignment.teacher.full_name }}</td>
+                    <td>{{ assignment.school_class.name }}</td>
+                    <td>{{ assignment.subject.name }} ({{ assignment.subject.code }})</td>
+                    <td>{% if assignment.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <a href="{% url 'hr_teacher_subject_update' assignment.id %}">Edit</a>
+                        {% if assignment.is_active %}
+                            <form method="post" action="{% url 'hr_teacher_subject_deactivate' assignment.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No teacher-subject allocations configured.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

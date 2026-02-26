@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Exam Subject Configuration</h2>
+
+<div class="card">
+    <p>
+        <strong>Exam:</strong> {{ exam.exam_type.name }} |
+        <strong>Class:</strong> {{ exam.school_class.name }} |
+        <strong>Section:</strong> {{ exam.section.name|default:"All" }} |
+        <strong>Session:</strong> {{ exam.session.name }}
+    </p>
+</div>
+
+<div class="card">
+    <h3>Add Subject</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'exam_list_core' %}">Back to Exams</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Max Marks</th>
+                <th>Pass Marks</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in subjects %}
+                <tr>
+                    <td>{{ row.subject.name }} ({{ row.subject.code }})</td>
+                    <td>{{ row.max_marks }}</td>
+                    <td>{{ row.pass_marks }}</td>
+                    <td>{% if row.is_active %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'exam_subject_update' exam.id row.id %}">Edit</a>
+                        {% if row.is_active %}
+                            <form method="post" action="{% url 'exam_subject_deactivate' exam.id row.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No subjects configured for this exam.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

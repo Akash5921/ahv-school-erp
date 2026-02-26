@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -9,22 +11,15 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 
     path('', include('apps.core.users.urls')),
-    
-    path('reports/', include('apps.operations.reports.urls')),
-    path('teacher/', include('apps.academics.staff.urls')),
-    path('attendance/', include('apps.academics.attendance.urls')),
-    path('accounts/', include('apps.finance.accounts.urls')),
-    path('fees/', include('apps.finance.fees.urls')),
-    path('payroll/', include('apps.finance.payroll.urls')),
     path('schools/', include('apps.core.schools.urls')),
     path('sessions/', include('apps.core.academic_sessions.urls')),
-    path('students/', include('apps.academics.students.urls')),
     path('academics/', include('apps.core.academics.urls')),
-    path('inventory/', include('apps.assets.inventory.urls')),
-    path('transport/', include('apps.operations.transport.urls')),
-    path('communication/', include('apps.operations.communication.urls')),
-
- 
-
-    
+    path('students/', include('apps.core.students.urls')),
+    path('hr/', include('apps.core.hr.urls')),
+    path('timetable/', include('apps.core.timetable.urls')),
+    path('attendance/', include('apps.core.attendance.urls')),
+    path('exams/', include('apps.core.exams.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

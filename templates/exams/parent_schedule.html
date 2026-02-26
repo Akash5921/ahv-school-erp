@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Exam Schedule</h2>
+
+{% if current_session %}
+<p><strong>Session:</strong> {{ current_session.name }}</p>
+{% endif %}
+
+<div class="card">
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Exam</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Subject</th>
+            <th>Room</th>
+            <th>Invigilator</th>
+            <th>Student(s)</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.schedule.exam.name }}</td>
+            <td>{{ row.schedule.date }}</td>
+            <td>{{ row.schedule.start_time }} - {{ row.schedule.end_time }}</td>
+            <td>{{ row.schedule.school_class.name }}</td>
+            <td>{{ row.schedule.section.name }}</td>
+            <td>{{ row.schedule.subject.name }}</td>
+            <td>{{ row.schedule.room|default:'-' }}</td>
+            <td>{{ row.schedule.invigilator.name|default:'-' }}</td>
+            <td>
+                {% for student in row.students %}
+                    {{ student.first_name }} {{ student.last_name }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    -
+                {% endfor %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9">No published exam schedules available for linked students.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

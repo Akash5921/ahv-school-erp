@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Section Form</h2>
+<h2>{% if section %}Edit Section{% else %}Add Section{% endif %}</h2>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save</button>
-</form>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {% if selected_session %}
+            <input type="hidden" name="filter_session" value="{{ selected_session.id }}">
+        {% endif %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'section_list' %}">Back to Section List</a>
+    </form>
+</div>
 
 {% endblock %}

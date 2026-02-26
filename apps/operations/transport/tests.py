@@ -122,3 +122,42 @@ class TransportWorkflowTests(TestCase):
         self.client.login(username='transport_teacher', password='pass12345')
         response = self.client.get(reverse('transport_student_manage'))
         self.assertEqual(response.status_code, 403)
+
+    def test_bus_delete_requires_post(self):
+        self.client.login(username='transport_admin', password='pass12345')
+
+        response = self.client.get(reverse('transport_bus_delete', args=[self.bus.id]))
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(Bus.objects.filter(pk=self.bus.id).exists())
+
+        response = self.client.post(reverse('transport_bus_delete', args=[self.bus.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Bus.objects.filter(pk=self.bus.id).exists())
+
+    def test_route_delete_requires_post(self):
+        self.client.login(username='transport_admin', password='pass12345')
+
+        response = self.client.get(reverse('transport_route_delete', args=[self.route.id]))
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(Route.objects.filter(pk=self.route.id).exists())
+
+        response = self.client.post(reverse('transport_route_delete', args=[self.route.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Route.objects.filter(pk=self.route.id).exists())
+
+    def test_student_transport_remove_requires_post(self):
+        assignment = StudentTransport.objects.create(
+            student=self.student_1,
+            academic_session=self.session,
+            bus=self.bus,
+            route=self.route,
+        )
+        self.client.login(username='transport_admin', password='pass12345')
+
+        response = self.client.get(reverse('transport_student_remove', args=[assignment.id]))
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(StudentTransport.objects.filter(pk=assignment.id).exists())
+
+        response = self.client.post(reverse('transport_student_remove', args=[assignment.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(StudentTransport.objects.filter(pk=assignment.id).exists())

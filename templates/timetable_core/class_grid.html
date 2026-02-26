@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Timetable Grid</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        {{ selection_form.as_p }}
+        <button type="submit">Load Grid</button>
+        {% if selected_session and selected_class and selected_section %}
+            <a href="{% url 'timetable_class_pdf' selected_class.id selected_section.id %}?session={{ selected_session.id }}&view_date={{ view_date|date:'Y-m-d' }}">Download PDF</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if selected_session and selected_class and selected_section %}
+<div class="card">
+    <p>
+        <strong>Session:</strong> {{ selected_session.name }} |
+        <strong>Class:</strong> {{ selected_class.name }} |
+        <strong>Section:</strong> {{ selected_section.name }} |
+        <strong>Substitution Overlay Date:</strong> {{ view_date }}
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Day</th>
+                {% for period in periods %}
+                    <th>
+                        P{{ period.period_number }}<br>
+                        <small>{{ period.start_time }} - {{ period.end_time }}</small>
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <th>{{ row.day_label }}</th>
+                    {% for cell in row.cells %}
+                        <td>
+                            {% if cell.entry %}
+                                <strong>{{ cell.entry.subject.code }}</strong><br>
+                                {{ cell.entry.teacher.full_name }}
+                                {% if cell.substitution %}
+                                    <br><span style="color:#dc2626;"><strong>Sub:</strong> {{ cell.substitution.substitute_teacher.full_name }}</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                            <br>
+                            <a href="{% url 'timetable_cell_edit' selected_class.id selected_section.id row.day_key cell.period.id %}?session={{ selected_session.id }}&view_date={{ view_date|date:'Y-m-d' }}">Edit</a>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{{ periods|length|add:1 }}">No rows available.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

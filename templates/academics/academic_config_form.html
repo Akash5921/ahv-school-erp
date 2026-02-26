@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if config %}Edit Academic Config{% else %}Add Academic Config{% endif %}</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'academic_config_list' %}">Back to Config List</a>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Teacher Timetable</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        {{ filter_form.as_p }}
+        <button type="submit">Load Timetable</button>
+        {% if selected_session and selected_teacher %}
+            <a href="{% url 'timetable_teacher_pdf' %}?session={{ selected_session.id }}&teacher={{ selected_teacher.id }}">Download PDF</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if selected_session and selected_teacher %}
+<div class="card">
+    <p>
+        <strong>Session:</strong> {{ selected_session.name }} |
+        <strong>Teacher:</strong> {{ selected_teacher.full_name }} |
+        <strong>Week Anchor:</strong> {{ anchor_date }}
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Day</th>
+                {% for period in periods %}
+                    <th>
+                        P{{ period.period_number }}<br>
+                        <small>{{ period.start_time }} - {{ period.end_time }}</small>
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <th>{{ row.day_label }}</th>
+                    {% for cell in row.cells %}
+                        <td>
+                            {% if cell.entry %}
+                                <strong>{{ cell.entry.subject.code }}</strong><br>
+                                {{ cell.entry.school_class.name }} - {{ cell.entry.section.name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{{ periods|length|add:1 }}">No timetable available for selected teacher.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Substitutions Assigned To Teacher</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Period</th>
+                <th>Class/Section</th>
+                <th>Subject</th>
+                <th>Original Teacher</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in substitutions_as_substitute %}
+                <tr>
+                    <td>{{ sub.date }}</td>
+                    <td>P{{ sub.period.period_number }}</td>
+                    <td>{{ sub.school_class.name }} - {{ sub.section.name }}</td>
+                    <td>{{ sub.subject.code }}</td>
+                    <td>{{ sub.original_teacher.full_name }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No substitution duties in selected week.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Periods Reassigned From Teacher</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Period</th>
+                <th>Class/Section</th>
+                <th>Subject</th>
+                <th>Substitute Teacher</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in substitutions_as_original %}
+                <tr>
+                    <td>{{ sub.date }}</td>
+                    <td>P{{ sub.period.period_number }}</td>
+                    <td>{{ sub.school_class.name }} - {{ sub.section.name }}</td>
+                    <td>{{ sub.subject.code }}</td>
+                    <td>{{ sub.substitute_teacher.full_name }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No reassigned periods in selected week.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

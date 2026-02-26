@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Exam Type Master</h2>
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>
+                    {{ session.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'exam_type_create' %}">Add Exam Type</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Name</th>
+                <th>Weightage</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in exam_types %}
+                <tr>
+                    <td>{{ row.session.name }}</td>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.weightage|default:"-" }}</td>
+                    <td>{% if row.is_active %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'exam_type_update' row.id %}">Edit</a>
+                        {% if row.is_active %}
+                            <form method="post" action="{% url 'exam_type_deactivate' row.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No exam types found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

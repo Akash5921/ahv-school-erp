@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if grade %}Update{% else %}Create{% endif %} Grade Scale</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'grade_scale_list_core' %}">Back</a>
+    </form>
+</div>
+
+{% endblock %}

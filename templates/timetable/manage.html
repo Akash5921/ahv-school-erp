@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Manage Timetable</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Add Timetable Entry</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Entry</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Timetable Entries</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Day</th>
+            <th>Period</th>
+            <th>Time</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Room</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.day_of_week|title }}</td>
+            <td>{{ entry.period_number }}</td>
+            <td>{{ entry.start_time }} - {{ entry.end_time }}</td>
+            <td>{{ entry.school_class.name }}</td>
+            <td>{{ entry.section.name }}</td>
+            <td>{{ entry.subject.name }}</td>
+            <td>{{ entry.teacher.name|default:'-' }}</td>
+            <td>{{ entry.room|default:'-' }}</td>
+            <td>{% if entry.is_active %}Yes{% else %}No{% endif %}</td>
+            <td>
+                <a href="{% url 'timetable_update' entry.id %}">Edit</a>
+                <form method="post" action="{% url 'timetable_delete' entry.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10">No timetable entries found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

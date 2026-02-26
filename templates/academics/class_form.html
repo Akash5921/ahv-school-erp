@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Class Form</h2>
+<h2>{% if school_class %}Edit Class{% else %}Add Class{% endif %}</h2>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save</button>
-</form>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'class_list' %}">Back to Class List</a>
+    </form>
+</div>
 
 {% endblock %}

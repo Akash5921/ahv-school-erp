@@ -1,101 +1,113 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container mt-4">
-    <h2 class="mb-4">School Admin Dashboard</h2>
+<h2>School Foundation Dashboard</h2>
 
-    <div class="row">
-
-        <!-- Total Students -->
-        <div class="col-md-3">
-            <div class="card text-white bg-primary mb-3 shadow">
-                <div class="card-body">
-                    <h5>Total Students</h5>
-                    <h3>{{ total_students }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Teachers -->
-        <div class="col-md-3">
-            <div class="card text-white bg-success mb-3 shadow">
-                <div class="card-body">
-                    <h5>Total Teachers</h5>
-                    <h3>{{ total_teachers }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Classes -->
-        <div class="col-md-3">
-            <div class="card text-white bg-warning mb-3 shadow">
-                <div class="card-body">
-                    <h5>Total Classes</h5>
-                    <h3>{{ total_classes }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Sections -->
-        <div class="col-md-3">
-            <div class="card text-white bg-danger mb-3 shadow">
-                <div class="card-body">
-                    <h5>Total Sections</h5>
-                    <h3>{{ total_sections }}</h3>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-<div class="row mt-5">
-
-    <!-- Student Chart -->
-    <div class="col-md-6">
-        <div class="card shadow p-3">
-            <h5>Students Overview</h5>
-            <canvas id="studentsChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Fee Chart -->
-    <div class="col-md-6">
-        <div class="card shadow p-3">
-            <h5>Monthly Fee Collection</h5>
-            <canvas id="feeChart"></canvas>
-        </div>
-    </div>
-
+<div class="card">
+    <strong>Tenant:</strong> {{ school.name }}<br>
+    <strong>Code:</strong> {{ school.code }}<br>
+    <strong>Subdomain:</strong> {{ school.subdomain|default:"-" }}<br>
+    <strong>Timezone:</strong> {{ school.timezone }}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const studentsChart = new Chart(document.getElementById('studentsChart'), {
-        type: 'bar',
-        data: {
-            labels: {{ months|safe }},
-            datasets: [{
-                label: 'Students',
-                data: {{ student_data|safe }},
-                backgroundColor: '#0d6efd'
-            }]
-        }
-    });
+<div class="card">
+    <h3>Core Metrics</h3>
+    <p><strong>Total Users:</strong> {{ total_users }}</p>
+    <p><strong>Active Users:</strong> {{ active_users }}</p>
+    <p><strong>Total Sessions:</strong> {{ total_sessions }}</p>
+    <p><strong>Current Session:</strong> {{ active_session.name|default:"No active session" }}</p>
+</div>
 
-    const feeChart = new Chart(document.getElementById('feeChart'), {
-        type: 'line',
-        data: {
-            labels: {{ months|safe }},
-            datasets: [{
-                label: 'Fees',
-                data: {{ fee_data|safe }},
-                borderColor: '#198754',
-                fill: false
-            }]
-        }
-    });
-</script>
+<div class="card">
+    <h3>Phase 1 Academic Setup (Current Session)</h3>
+    {% if active_session %}
+        <p><strong>Active Subjects:</strong> {{ total_subjects }}</p>
+        <p><strong>Classes:</strong> {{ class_count }}</p>
+        <p><strong>Sections:</strong> {{ section_count }}</p>
+        <p><strong>Class-Subject Mappings:</strong> {{ mapping_count }}</p>
+        <p><strong>Periods:</strong> {{ period_count }}</p>
+        <p><strong>Academic Config:</strong> {% if has_config %}Configured{% else %}Missing{% endif %}</p>
+    {% else %}
+        <p>Select or activate a session first, then configure academic masters.</p>
+    {% endif %}
+</div>
 
+<div class="card">
+    <h3>User Distribution</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Role</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for role, total in role_counts.items %}
+                <tr>
+                    <td>{{ role|title }}</td>
+                    <td>{{ total }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="2">No users mapped to this school yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
+<div class="card">
+    <h3>Tenant Domains</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th>Primary</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for domain in domains %}
+                <tr>
+                    <td>{{ domain.domain }}</td>
+                    <td>{% if domain.is_primary %}Yes{% else %}No{% endif %}</td>
+                    <td>{% if domain.is_active %}Yes{% else %}No{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No custom domains configured.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Recent Audit Events</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>When</th>
+                <th>Action</th>
+                <th>User</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in recent_logs %}
+                <tr>
+                    <td>{{ log.created_at }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.user.username|default:"system" }}</td>
+                    <td>{{ log.details|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">No audit events yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% endblock %}

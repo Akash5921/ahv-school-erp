@@ -20,7 +20,10 @@
         <td>{{ grade.remarks|default:'-' }}</td>
         <td>
             <a href="{% url 'grade_scale_update' grade.id %}">Edit</a>
-            <a href="{% url 'grade_scale_delete' grade.id %}">Delete</a>
+            <form method="post" action="{% url 'grade_scale_delete' grade.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Delete</button>
+            </form>
         </td>
     </tr>
     {% empty %}

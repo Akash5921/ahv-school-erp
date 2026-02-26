@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Manage Exams</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div class="card">
+    <h3>Create Exam</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Exam</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Exams</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Name</th>
+            <th>Session</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Published</th>
+            <th>Actions</th>
+        </tr>
+        {% for exam in exams %}
+        <tr>
+            <td>{{ exam.name }}</td>
+            <td>{{ exam.academic_session.name }}</td>
+            <td>{{ exam.start_date }}</td>
+            <td>{{ exam.end_date }}</td>
+            <td>{% if exam.is_published %}Yes{% else %}No{% endif %}</td>
+            <td>
+                <a href="{% url 'exam_update' exam.id %}">Edit</a>
+                <a href="{% url 'exam_schedule_manage' exam.id %}">Schedules</a>
+                <form method="post" action="{% url 'exam_toggle_publish' exam.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">
+                        {% if exam.is_published %}Unpublish{% else %}Publish{% endif %}
+                    </button>
+                </form>
+                <form method="post" action="{% url 'exam_delete' exam.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No exams available.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

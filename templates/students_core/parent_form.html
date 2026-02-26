@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Parent Profile - {{ student.full_name }}</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Parent Info</button>
+        <a href="{% url 'student_list' %}">Back to Students</a>
+    </form>
+</div>
+
+{% endblock %}

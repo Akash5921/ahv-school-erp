@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Leave Management</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Status:</label>
+        <select name="status">
+            <option value="">All</option>
+            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="approved" {% if selected_status == 'approved' %}selected{% endif %}>Approved</option>
+            <option value="rejected" {% if selected_status == 'rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'hr_leave_request_create' %}">Apply Leave</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Staff</th>
+                <th>Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Days</th>
+                <th>Status</th>
+                <th>Approved By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in leaves %}
+                <tr>
+                    <td>{{ leave.staff.employee_id }} - {{ leave.staff.full_name }}</td>
+                    <td>{{ leave.get_leave_type_display }}</td>
+                    <td>{{ leave.start_date }}</td>
+                    <td>{{ leave.end_date }}</td>
+                    <td>{{ leave.total_days }}</td>
+                    <td>{{ leave.get_status_display }}</td>
+                    <td>{{ leave.approved_by.username|default:"-" }}</td>
+                    <td>
+                        {% if actor_is_admin and leave.status == 'pending' %}
+                            <form method="post" action="{% url 'hr_leave_request_review' leave.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="decision" value="approved">
+                                <button type="submit">Approve</button>
+                            </form>
+                            <form method="post" action="{% url 'hr_leave_request_review' leave.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="decision" value="rejected">
+                                <button type="submit">Reject</button>
+                            </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No leave requests found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

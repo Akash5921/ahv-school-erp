@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Exam Schedules: {{ exam.name }}</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<p>
+    <strong>Session:</strong> {{ exam.academic_session.name }} |
+    <strong>Date Range:</strong> {{ exam.start_date }} to {{ exam.end_date }}
+</p>
+
+<div class="card">
+    <h3>Add Schedule</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Schedule</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Schedule List</h3>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Subject</th>
+            <th>Invigilator</th>
+            <th>Marks</th>
+            <th>Room</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+        {% for row in schedules %}
+        <tr>
+            <td>{{ row.date }}</td>
+            <td>{{ row.start_time }} - {{ row.end_time }}</td>
+            <td>{{ row.school_class.name }}</td>
+            <td>{{ row.section.name }}</td>
+            <td>{{ row.subject.name }}</td>
+            <td>{{ row.invigilator.name|default:'-' }}</td>
+            <td>{{ row.pass_marks }} / {{ row.max_marks }}</td>
+            <td>{{ row.room|default:'-' }}</td>
+            <td>{% if row.is_active %}Yes{% else %}No{% endif %}</td>
+            <td>
+                <a href="{% url 'exam_schedule_update' exam.id row.id %}">Edit</a>
+                <form method="post" action="{% url 'exam_schedule_delete' exam.id row.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10">No schedules added for this exam.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<p><a href="{% url 'exam_manage' %}">Back to Exams</a></p>
+
+{% endblock %}

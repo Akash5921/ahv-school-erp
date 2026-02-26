@@ -20,43 +20,58 @@
             {% endfor %}
         </select>
 
-        <label>Subject:</label>
-        <select name="subject" id="subjectSelect"></select>
+        <label>Exam Schedule:</label>
+        <select name="exam_schedule" id="examScheduleSelect"></select>
 
         <label>Marks Obtained:</label>
-        <input type="number" name="marks">
+        <input type="number" name="marks" step="0.01">
 
-        <label>Total Marks:</label>
-        <input type="number" name="total">
-
-        <label>Exam Type:</label>
-        <input type="text" name="exam">
+        <p id="scheduleHint" style="margin-top: 8px; color: #334155;"></p>
 
         <br><br>
         <button type="submit">Save Marks</button>
     </form>
 </div>
 
-{{ subject_map|json_script:"subjectMapData" }}
+{{ schedule_map|json_script:"scheduleMapData" }}
 <script>
     const studentSelect = document.getElementById('studentSelect');
-    const subjectSelect = document.getElementById('subjectSelect');
-    const subjectMap = JSON.parse(document.getElementById('subjectMapData').textContent);
+    const examScheduleSelect = document.getElementById('examScheduleSelect');
+    const scheduleHint = document.getElementById('scheduleHint');
+    const scheduleMap = JSON.parse(document.getElementById('scheduleMapData').textContent);
 
-    function loadSubjects() {
-        const selectedStudentId = studentSelect.value;
-        const subjects = subjectMap[selectedStudentId] || [];
-        subjectSelect.innerHTML = '';
-        subjects.forEach((subjectName) => {
-            const option = document.createElement('option');
-            option.value = subjectName;
-            option.textContent = subjectName;
-            subjectSelect.appendChild(option);
-        });
+    function updateScheduleHint() {
+        const selectedOption = examScheduleSelect.options[examScheduleSelect.selectedIndex];
+        if (!selectedOption) {
+            scheduleHint.textContent = 'No exam schedule available for this student.';
+            return;
+        }
+        const totalMarks = selectedOption.dataset.totalMarks;
+        const subject = selectedOption.dataset.subject;
+        const examName = selectedOption.dataset.examName;
+        scheduleHint.textContent = `Subject: ${subject} | Exam: ${examName} | Total Marks: ${totalMarks}`;
     }
 
-    studentSelect.addEventListener('change', loadSubjects);
-    loadSubjects();
+    function loadSchedules() {
+        const selectedStudentId = studentSelect.value;
+        const schedules = scheduleMap[selectedStudentId] || [];
+        examScheduleSelect.innerHTML = '';
+        schedules.forEach((schedule) => {
+            const option = document.createElement('option');
+            option.value = schedule.id;
+            option.textContent = schedule.label;
+            option.dataset.subject = schedule.subject;
+            option.dataset.examName = schedule.exam_name;
+            option.dataset.totalMarks = schedule.total_marks;
+            examScheduleSelect.appendChild(option);
+        });
+
+        updateScheduleHint();
+    }
+
+    studentSelect.addEventListener('change', loadSchedules);
+    examScheduleSelect.addEventListener('change', updateScheduleHint);
+    loadSchedules();
 </script>
 
 {% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Staff Attendance Report</h2>
+
+<div class="card">
+    <form method="get">
+        {{ form.as_p }}
+        <button type="submit">Generate</button>
+        {% if report_rows %}
+            <button type="submit" name="export" value="csv">Export CSV</button>
+            <button type="submit" name="export" value="pdf">Export PDF</button>
+        {% endif %}
+    </form>
+</div>
+
+{% if report_rows %}
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Staff</th>
+                    <th>Total Days</th>
+                    <th>Present</th>
+                    <th>Half-Day</th>
+                    <th>Leave</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_rows %}
+                    <tr>
+                        <td>{{ row.staff.employee_id }}</td>
+                        <td>{{ row.staff.full_name }}</td>
+                        <td>{{ row.total_days }}</td>
+                        <td>{{ row.present_days }}</td>
+                        <td>{{ row.half_days }}</td>
+                        <td>{{ row.leave_days }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% endblock %}

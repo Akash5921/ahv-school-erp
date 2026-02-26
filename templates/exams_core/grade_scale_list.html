@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Grade Scale</h2>
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>
+                    {{ session.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'grade_scale_create_core' %}">Add Grade</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Grade</th>
+                <th>Range</th>
+                <th>Description</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grade in grades %}
+                <tr>
+                    <td>{{ grade.session.name }}</td>
+                    <td>{{ grade.grade_name }}</td>
+                    <td>{{ grade.min_percentage }} - {{ grade.max_percentage }}</td>
+                    <td>{{ grade.description|default:"-" }}</td>
+                    <td>{% if grade.is_active %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'grade_scale_update_core' grade.id %}">Edit</a>
+                        {% if grade.is_active %}
+                            <form method="post" action="{% url 'grade_scale_deactivate_core' grade.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No grade scales configured.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -3,6 +3,7 @@ from django.db import models
 from apps.core.schools.models import School
 from apps.core.academic_sessions.models import AcademicSession
 from apps.core.academics.models import SchoolClass, Section
+from apps.academics.exams.models import ExamSchedule
 from apps.core.utils.managers import SchoolManager
 
 
@@ -87,6 +88,13 @@ class StudentMark(models.Model):
 
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    exam_schedule = models.ForeignKey(
+        ExamSchedule,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_marks'
+    )
     subject = models.CharField(max_length=100)
 
     marks_obtained = models.FloatField()

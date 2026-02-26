@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{{ role|title }} Workspace</h2>
+
+<div class="card">
+    <p>This role is authenticated and tenant-aware in Phase 0.</p>
+    <p>Feature modules for academics, finance, and operations are intentionally deferred.</p>
+</div>
+
+<div class="card">
+    <h3>Phase 0 Ready Components</h3>
+    <ul>
+        <li>Tenant identity and school lifecycle</li>
+        <li>Tenant domain mapping</li>
+        <li>Session lifecycle and active session controls</li>
+        <li>Role-based access control and audit logging</li>
+    </ul>
+</div>
+
+{% endblock %}

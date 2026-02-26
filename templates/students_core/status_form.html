@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Update Status - {{ student.full_name }}</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <p><strong>Current Status:</strong> {{ student.get_status_display }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Status</button>
+        <a href="{% url 'student_list' %}">Back to Students</a>
+    </form>
+</div>
+
+{% if student.status == 'transferred' %}
+<div class="card">
+    <a href="{% url 'student_transfer_certificate_download' student.id %}">Download Transfer Certificate (PDF)</a>
+</div>
+{% endif %}
+
+{% endblock %}

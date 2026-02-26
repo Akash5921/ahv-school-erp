@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Subject-wise Marks Entry</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        {{ selection_form.as_p }}
+        <button type="submit">Load Students</button>
+    </form>
+</div>
+
+{% if selected_exam and selected_subject %}
+    <div class="card">
+        <p>
+            <strong>Exam:</strong> {{ selected_exam.exam_type.name }} |
+            <strong>Class:</strong> {{ selected_exam.school_class.name }} |
+            <strong>Section:</strong> {{ selected_exam.section.name|default:"All" }} |
+            <strong>Subject:</strong> {{ selected_subject.name }}
+        </p>
+    </div>
+{% endif %}
+
+{% if student_rows %}
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ selection_form.as_p }}
+            <input type="hidden" name="action" value="save">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Admission No</th>
+                        <th>Student</th>
+                        <th>Marks</th>
+                        <th>Grade</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in student_rows %}
+                        <tr>
+                            <td>{{ row.student.admission_number }}</td>
+                            <td>{{ row.student.full_name }}</td>
+                            <td>
+                                <input type="number" step="0.01" min="0" name="marks_{{ row.student.id }}" value="{{ row.marks }}">
+                            </td>
+                            <td>{{ row.grade|default:"-" }}</td>
+                            <td>
+                                <input type="text" name="remarks_{{ row.student.id }}" value="{{ row.remarks }}">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
+            <button type="submit">Save Marks</button>
+        </form>
+    </div>
+{% endif %}
+
+{% endblock %}

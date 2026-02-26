@@ -51,7 +51,7 @@ def item_list(request):
     error = None
 
     if request.method == 'POST':
-        form = InventoryItemForm(request.POST)
+        form = InventoryItemForm(request.POST, school=school)
         form.fields['category'].queryset = InventoryCategory.objects.all().order_by('name')
         if form.is_valid():
             item = form.save(commit=False)
@@ -67,7 +67,7 @@ def item_list(request):
             return redirect('inventory_item_list')
         error = 'Please correct the item details.'
     else:
-        form = InventoryItemForm()
+        form = InventoryItemForm(school=school)
         form.fields['category'].queryset = InventoryCategory.objects.all().order_by('name')
 
     return render(request, 'inventory/item_list.html', {
@@ -91,7 +91,7 @@ def purchase_item(request):
     ).select_related('item').order_by('-purchase_date', '-id') if current_session else []
 
     if request.method == 'POST':
-        form = InventoryPurchaseForm(request.POST)
+        form = InventoryPurchaseForm(request.POST, school=school)
         form.fields['item'].queryset = school_items
 
         if not current_session:
@@ -112,7 +112,7 @@ def purchase_item(request):
         else:
             error = 'Please correct purchase details.'
     else:
-        form = InventoryPurchaseForm()
+        form = InventoryPurchaseForm(school=school)
         form.fields['item'].queryset = school_items
 
     return render(request, 'inventory/purchase_item.html', {

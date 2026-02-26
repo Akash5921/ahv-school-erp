@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if mapping %}Edit Class-Subject Mapping{% else %}Add Class-Subject Mapping{% endif %}</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {% if selected_session %}
+            <input type="hidden" name="filter_session" value="{{ selected_session.id }}">
+        {% endif %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'class_subject_list' %}">Back to Mapping List</a>
+    </form>
+</div>
+
+{% endblock %}

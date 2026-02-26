@@ -26,9 +26,12 @@
         <td>{% if staff.user %}{{ staff.user.username }}{% else %}-{% endif %}</td>
         <td>
             <a href="{% url 'staff_update' staff.id %}">Edit</a> |
-            <a href="{% url 'staff_toggle_active' staff.id %}">
-                {% if staff.is_active %}Deactivate{% else %}Activate{% endif %}
-            </a>
+            <form method="post" action="{% url 'staff_toggle_active' staff.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">
+                    {% if staff.is_active %}Deactivate{% else %}Activate{% endif %}
+                </button>
+            </form>
             {% if not staff.user %}
                 | <a href="{% url 'staff_assign_user' staff.id %}">Create Login</a>
             {% endif %}

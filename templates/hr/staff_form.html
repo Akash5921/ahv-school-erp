@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if staff %}Edit Staff{% else %}Add Staff{% endif %}</h2>
+
+<div class="card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'hr_staff_list' %}">Back to Staff</a>
+    </form>
+</div>
+
+{% endblock %}

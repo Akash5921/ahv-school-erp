@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from apps.academics.exams.models import ExamSchedule
 from apps.core.academics.models import SchoolClass, Section, Subject
 from apps.core.users.decorators import role_required
 from .models import GradeScale, Student, StudentEnrollment, StudentMark
 from .forms import GradeScaleForm, StudentForm
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.db import transaction
+from django.views.decorators.http import require_POST
 from apps.core.academic_sessions.models import AcademicSession
 from apps.core.users.audit import log_audit_event
 
@@ -54,7 +56,7 @@ def student_list(request):
 @role_required('schooladmin')
 def student_create(request):
     if request.method == 'POST':
-        form = StudentForm(request.POST)
+        form = StudentForm(request.POST, school=request.user.school)
         form.fields['school_class'].queryset = SchoolClass.objects.filter(
             school=request.user.school
         )
@@ -73,7 +75,7 @@ def student_create(request):
                 _sync_student_enrollment(student)
             return redirect('student_list')
     else:
-        form = StudentForm()
+        form = StudentForm(school=request.user.school)
 
         form.fields['school_class'].queryset = SchoolClass.objects.filter(
             school=request.user.school
@@ -111,7 +113,7 @@ def student_update(request, pk):
     )
 
     if request.method == 'POST':
-        form = StudentForm(request.POST, instance=student)
+        form = StudentForm(request.POST, instance=student, school=request.user.school)
         form.fields['school_class'].queryset = SchoolClass.objects.filter(
             school=request.user.school
         )
@@ -128,7 +130,7 @@ def student_update(request, pk):
                 _sync_student_enrollment(student)
             return redirect('student_list')
     else:
-        form = StudentForm(instance=student)
+        form = StudentForm(instance=student, school=request.user.school)
 
         form.fields['school_class'].queryset = SchoolClass.objects.filter(
             school=request.user.school
@@ -165,49 +167,127 @@ def student_delete(request, pk):
 @role_required('teacher')
 def add_marks(request):
     school = request.user.school
-    students = Student.objects.filter(school=school)
-    subject_map = {}
+    students = Student.objects.filter(school=school).select_related(
+        'academic_session',
+        'school_class',
+        'section',
+    )
+
+    class_ids = {student.school_class_id for student in students if student.school_class_id}
+    section_ids = {student.section_id for student in students if student.section_id}
+    schedules = ExamSchedule.objects.filter(
+        school=school,
+        is_active=True,
+        exam__is_published=True,
+        school_class_id__in=class_ids,
+        section_id__in=section_ids,
+    ).select_related(
+        'exam',
+        'subject',
+    ).order_by(
+        'date',
+        'start_time',
+        'exam__name',
+        'subject__name',
+    )
+
+    schedule_map = {}
     for student in students:
-        subjects = Subject.objects.filter(
-            school=school,
-            school_class=student.school_class
-        ).values_list('name', flat=True)
-        subject_map[student.id] = list(subjects)
+        schedule_map[student.id] = []
+        if not student.school_class_id or not student.section_id:
+            continue
+
+        for schedule in schedules:
+            if schedule.school_class_id != student.school_class_id:
+                continue
+            if schedule.section_id != student.section_id:
+                continue
+            if student.academic_session_id and schedule.exam.academic_session_id != student.academic_session_id:
+                continue
+
+            label = (
+                f"{schedule.exam.name} | {schedule.subject.name} | "
+                f"{schedule.date} {schedule.start_time.strftime('%H:%M')}-{schedule.end_time.strftime('%H:%M')}"
+            )
+            schedule_map[student.id].append({
+                'id': schedule.id,
+                'label': label,
+                'subject': schedule.subject.name,
+                'exam_name': schedule.exam.name,
+                'total_marks': float(schedule.max_marks),
+            })
 
     if request.method == 'POST':
         student_id = request.POST.get('student')
-        subject = request.POST.get('subject')
-        marks = request.POST.get('marks')
-        total = request.POST.get('total')
-        exam = request.POST.get('exam')
+        exam_schedule_id = request.POST.get('exam_schedule')
+        marks_raw = request.POST.get('marks')
+
+        if not exam_schedule_id:
+            return render(request, 'students/add_marks.html', {
+                'students': students,
+                'schedule_map': schedule_map,
+                'error': 'Please select an exam schedule.',
+            })
 
         student = get_object_or_404(
             Student,
             id=student_id,
             school=school
         )
+        exam_schedule = get_object_or_404(
+            ExamSchedule.objects.select_related('exam', 'subject'),
+            id=exam_schedule_id,
+            school=school,
+            is_active=True,
+            exam__is_published=True,
+        )
 
-        if subject not in subject_map.get(student.id, []):
+        if student.school_class_id != exam_schedule.school_class_id or student.section_id != exam_schedule.section_id:
             return render(request, 'students/add_marks.html', {
                 'students': students,
-                'subject_map': subject_map,
-                'error': 'Please select a valid subject for the selected class.',
+                'schedule_map': schedule_map,
+                'error': "Selected exam schedule is not assigned to the selected student's class/section.",
+            })
+
+        if student.academic_session_id and student.academic_session_id != exam_schedule.exam.academic_session_id:
+            return render(request, 'students/add_marks.html', {
+                'students': students,
+                'schedule_map': schedule_map,
+                'error': "Selected exam schedule does not belong to the student's academic session.",
+            })
+
+        try:
+            marks = float(marks_raw)
+        except (TypeError, ValueError):
+            return render(request, 'students/add_marks.html', {
+                'students': students,
+                'schedule_map': schedule_map,
+                'error': 'Please enter valid obtained marks.',
+            })
+
+        total = float(exam_schedule.max_marks)
+        if marks < 0 or marks > total:
+            return render(request, 'students/add_marks.html', {
+                'students': students,
+                'schedule_map': schedule_map,
+                'error': f'Marks must be between 0 and {total}.',
             })
 
         StudentMark.objects.create(
             school=school,
             student=student,
-            subject=subject,
+            exam_schedule=exam_schedule,
+            subject=exam_schedule.subject.name,
             marks_obtained=marks,
             total_marks=total,
-            exam_type=exam
+            exam_type=exam_schedule.exam.name
         )
 
         return redirect('add_marks')
 
     return render(request, 'students/add_marks.html', {
         'students': students,
-        'subject_map': subject_map,
+        'schedule_map': schedule_map,
     })
 
 
@@ -258,17 +338,27 @@ def exam_report_card(request, student_id):
     marks_queryset = StudentMark.objects.filter(
         school=student.school,
         student=student
-    )
-    exam_types = marks_queryset.values_list('exam_type', flat=True).distinct().order_by('exam_type')
+    ).select_related('exam_schedule', 'exam_schedule__exam')
+    scheduled_exam_types = marks_queryset.filter(
+        exam_schedule__isnull=False
+    ).values_list('exam_schedule__exam__name', flat=True)
+    legacy_exam_types = marks_queryset.filter(
+        exam_schedule__isnull=True
+    ).values_list('exam_type', flat=True)
+    exam_types = sorted(set(scheduled_exam_types).union(set(legacy_exam_types)))
 
     selected_exam = request.GET.get('exam', '')
     if selected_exam:
-        marks_queryset = marks_queryset.filter(exam_type=selected_exam)
+        marks_queryset = marks_queryset.filter(
+            Q(exam_schedule__exam__name=selected_exam) |
+            Q(exam_schedule__isnull=True, exam_type=selected_exam)
+        )
 
     marks_data = []
     total_obtained = 0
     total_max = 0
     for mark in marks_queryset:
+        exam_name = mark.exam_schedule.exam.name if mark.exam_schedule_id else mark.exam_type
         percentage = mark.percentage()
         grade = _grade_for_percentage(student.school, percentage)
         marks_data.append({
@@ -277,7 +367,7 @@ def exam_report_card(request, student_id):
             'total_marks': mark.total_marks,
             'percentage': percentage,
             'grade': grade,
-            'exam_type': mark.exam_type,
+            'exam_name': exam_name,
         })
         total_obtained += mark.marks_obtained
         total_max += mark.total_marks
@@ -352,6 +442,7 @@ def grade_scale_update(request, pk):
 
 @login_required
 @role_required('schooladmin')
+@require_POST
 def grade_scale_delete(request, pk):
     grade_scale = get_object_or_404(
         GradeScale,
@@ -381,6 +472,7 @@ def enrollment_history(request, pk):
 
 @login_required
 @role_required('schooladmin')
+@require_POST
 def enrollment_status_update(request, enrollment_id):
     enrollment = get_object_or_404(
         StudentEnrollment,
@@ -388,19 +480,18 @@ def enrollment_status_update(request, enrollment_id):
         student__school=request.user.school
     )
 
-    if request.method == 'POST':
-        new_status = request.POST.get('status')
-        allowed_status = {'active', 'passed', 'left'}
-        if new_status in allowed_status:
-            enrollment.status = new_status
-            enrollment.save(update_fields=['status'])
+    new_status = request.POST.get('status')
+    allowed_status = {'active', 'passed', 'left'}
+    if new_status in allowed_status:
+        enrollment.status = new_status
+        enrollment.save(update_fields=['status'])
 
-            log_audit_event(
-                request=request,
-                action='enrollment.status_updated',
-                school=request.user.school,
-                target=enrollment,
-                details=f"Student={enrollment.student_id}, Status={new_status}",
-            )
+        log_audit_event(
+            request=request,
+            action='enrollment.status_updated',
+            school=request.user.school,
+            target=enrollment,
+            details=f"Student={enrollment.student_id}, Status={new_status}",
+        )
 
     return redirect('enrollment_history', pk=enrollment.student_id)

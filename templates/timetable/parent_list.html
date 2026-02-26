@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Student Timetable</h2>
+
+<div class="card">
+    {% if current_session %}
+    <p><strong>Session:</strong> {{ current_session.name }}</p>
+    {% endif %}
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Day</th>
+            <th>Period</th>
+            <th>Time</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Room</th>
+            <th>Student(s)</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.entry.day_of_week|title }}</td>
+            <td>{{ row.entry.period_number }}</td>
+            <td>{{ row.entry.start_time }} - {{ row.entry.end_time }}</td>
+            <td>{{ row.entry.school_class.name }}</td>
+            <td>{{ row.entry.section.name }}</td>
+            <td>{{ row.entry.subject.name }}</td>
+            <td>{{ row.entry.teacher.name|default:'-' }}</td>
+            <td>{{ row.entry.room|default:'-' }}</td>
+            <td>
+                {% for student in row.students %}
+                    {{ student.first_name }} {{ student.last_name }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    -
+                {% endfor %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9">No timetable entries available for linked students.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

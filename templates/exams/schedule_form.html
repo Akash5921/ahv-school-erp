@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Edit Exam Schedule</h2>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<p><strong>Exam:</strong> {{ exam.name }}</p>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Schedule</button>
+        <a href="{% url 'exam_schedule_manage' exam.id %}">Back</a>
+    </form>
+</div>
+
+{% endblock %}

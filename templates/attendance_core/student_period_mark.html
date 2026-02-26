@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Student Period-Wise Attendance</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        {{ selection_form.as_p }}
+        <button type="submit">Load Period Slot</button>
+    </form>
+</div>
+
+{% if selection_form.is_valid %}
+    <div class="card">
+        <strong>Session:</strong> {{ selected_session.name }} |
+        <strong>Class:</strong> {{ selected_class.name }} |
+        <strong>Section:</strong> {{ selected_section.name }} |
+        <strong>Date:</strong> {{ target_date }} |
+        <strong>Period:</strong> P{{ selected_period.period_number }}
+    </div>
+{% endif %}
+
+{% if timetable_entry %}
+    <div class="card">
+        <strong>Subject:</strong> {{ timetable_entry.subject.name }} ({{ timetable_entry.subject.code }}) |
+        <strong>Teacher:</strong> {{ timetable_entry.teacher.full_name }}
+        {% if active_substitution %}
+            | <strong>Substitute:</strong> {{ active_substitution.substitute_teacher.full_name }}
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if students %}
+    <div class="card">
+        {% if not can_submit %}
+            <p>Period-wise marking is disabled because attendance type is not set to period-wise.</p>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {{ selection_form.as_p }}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Admission No</th>
+                        <th>Student</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in student_rows %}
+                        <tr>
+                            <td>{{ row.student.admission_number }}</td>
+                            <td>{{ row.student.full_name }}</td>
+                            <td>
+                                <select name="status_{{ row.student.id }}">
+                                    {% for status_key, status_label in status_choices %}
+                                        <option value="{{ status_key }}" {% if row.status == status_key %}selected{% endif %}>
+                                            {{ status_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
+            <button type="submit" {% if not can_submit %}disabled{% endif %}>Save Period Attendance</button>
+        </form>
+    </div>
+{% endif %}
+
+{% endblock %}

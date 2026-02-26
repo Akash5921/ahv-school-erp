@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Designation Master</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <a href="{% url 'hr_designation_create' %}">Add Designation</a>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for designation in designations %}
+                <tr>
+                    <td>{{ designation.name }}</td>
+                    <td>{{ designation.description|default:"-" }}</td>
+                    <td>{% if designation.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <a href="{% url 'hr_designation_update' designation.id %}">Edit</a>
+                        {% if designation.is_active %}
+                            <form method="post" action="{% url 'hr_designation_deactivate' designation.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">No designations configured.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if designation %}Edit{% else %}Add{% endif %} Designation</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'hr_designation_list' %}">Back to Designations</a>
+    </form>
+</div>
+
+{% endblock %}

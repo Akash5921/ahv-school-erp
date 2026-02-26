@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Student Lifecycle</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Class:</label>
+        <select name="class">
+            <option value="">All Classes</option>
+            {% for school_class in classes %}
+                <option value="{{ school_class.id }}" {% if selected_class_id == school_class.id %}selected{% endif %}>
+                    {{ school_class.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Section:</label>
+        <select name="section">
+            <option value="">All Sections</option>
+            {% for section in sections %}
+                <option value="{{ section.id }}" {% if selected_section_id == section.id %}selected{% endif %}>
+                    {{ section.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Status:</label>
+        <select name="status">
+            <option value="">All Statuses</option>
+            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+            <option value="transferred" {% if selected_status == 'transferred' %}selected{% endif %}>Transferred</option>
+            <option value="passed" {% if selected_status == 'passed' %}selected{% endif %}>Passed</option>
+            <option value="dropped" {% if selected_status == 'dropped' %}selected{% endif %}>Dropped</option>
+            <option value="alumni" {% if selected_status == 'alumni' %}selected{% endif %}>Alumni</option>
+        </select>
+
+        <label>Search:</label>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Admission no or name">
+
+        <button type="submit">Filter</button>
+        <a href="{% url 'student_list' %}">Reset</a>
+    </form>
+</div>
+
+<div class="card">
+    <a href="{% url 'student_create' %}">Add Student</a>
+    <a href="{% url 'document_type_list' %}">Document Types</a>
+    {% with query=request.GET.urlencode %}
+        {% if query %}
+            <a href="{% url 'student_id_card_bulk_download' %}?{{ query }}">Bulk ID PDF</a>
+            <a href="{% url 'student_id_card_bulk_download' %}?{{ query }}&qr=1">Bulk ID PDF + QR</a>
+        {% else %}
+            <a href="{% url 'student_id_card_bulk_download' %}">Bulk ID PDF</a>
+            <a href="{% url 'student_id_card_bulk_download' %}?qr=1">Bulk ID PDF + QR</a>
+        {% endif %}
+    {% endwith %}
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Admission No</th>
+                <th>Name</th>
+                <th>Session</th>
+                <th>Class / Section</th>
+                <th>Roll</th>
+                <th>Status</th>
+                <th>Finalized</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+                <tr>
+                    <td>{{ student.admission_number }}</td>
+                    <td>{{ student.full_name }}</td>
+                    <td>{{ student.session.name }}</td>
+                    <td>
+                        {{ student.current_class.name|default:"-" }} / {{ student.current_section.name|default:"-" }}
+                    </td>
+                    <td>{{ student.roll_number|default:"-" }}</td>
+                    <td>{{ student.get_status_display }}</td>
+                    <td>{% if student.admission_finalized %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'student_update' student.id %}">Edit</a>
+                        <a href="{% url 'student_parent_update' student.id %}">Parent</a>
+                        <a href="{% url 'student_document_list' student.id %}">Documents</a>
+                        <a href="{% url 'student_status_update' student.id %}">Status</a>
+                        <a href="{% url 'student_id_card_download' student.id %}">ID PDF</a>
+                        <a href="{% url 'student_id_card_download' student.id %}?qr=1">ID + QR</a>
+                        {% if student.status == 'transferred' %}
+                            <a href="{% url 'student_transfer_certificate_download' student.id %}">TC PDF</a>
+                        {% endif %}
+                        <form method="post" action="{% url 'student_archive' student.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">Archive</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No students found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

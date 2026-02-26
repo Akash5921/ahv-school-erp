@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Student Daily Attendance</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        {{ selection_form.as_p }}
+        <button type="submit">Load Students</button>
+    </form>
+</div>
+
+{% if selection_form.is_valid %}
+    <div class="card">
+        <strong>Session:</strong> {{ selected_session.name }} |
+        <strong>Class:</strong> {{ selected_class.name }} |
+        <strong>Section:</strong> {{ selected_section.name }} |
+        <strong>Date:</strong> {{ target_date }}
+    </div>
+{% endif %}
+
+{% if students %}
+    <div class="card">
+        {% if not can_submit %}
+            <p>Daily marking is disabled because attendance type is set to period-wise.</p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ selection_form.as_p }}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Admission No</th>
+                        <th>Student</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in student_rows %}
+                        <tr>
+                            <td>{{ row.student.admission_number }}</td>
+                            <td>{{ row.student.full_name }}</td>
+                            <td>
+                                <select name="status_{{ row.student.id }}">
+                                    {% for status_key, status_label in status_choices %}
+                                        <option value="{{ status_key }}" {% if row.status == status_key %}selected{% endif %}>
+                                            {{ status_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
+            <button type="submit" {% if not can_submit %}disabled{% endif %}>Save Daily Attendance</button>
+        </form>
+    </div>
+{% endif %}
+
+{% endblock %}

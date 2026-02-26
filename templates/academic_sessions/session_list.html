@@ -2,33 +2,50 @@
 {% block content %}
 
 <h2>Academic Sessions</h2>
-<a href="{% url 'session_create' %}">Add Session</a>
 
-<table border="1" cellpadding="10">
-<tr>
-    <th>Name</th>
-    <th>Start Date</th>
-    <th>End Date</th>
-    <th>Active</th>
-    <th>Actions</th>
-</tr>
+<div class="card">
+    <a href="{% url 'session_create' %}">Create Session</a>
+</div>
 
-{% for session in sessions %}
-<tr>
-    <td>{{ session.name }}</td>
-    <td>{{ session.start_date }}</td>
-    <td>{{ session.end_date }}</td>
-    <td>{% if session.is_active %}Yes{% else %}No{% endif %}</td>
-    <td>
-        <a href="{% url 'session_update' session.id %}">Edit</a>
-        <a href="{% url 'session_delete' session.id %}">Delete</a>
-        {% if not session.is_active %}
-            <a href="{% url 'session_activate' session.id %}">Activate</a>
-        {% endif %}
-    </td>
-</tr>
-{% endfor %}
-
-</table>
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for session in sessions %}
+            <tr>
+                <td>{{ session.name }}</td>
+                <td>{{ session.start_date }}</td>
+                <td>{{ session.end_date }}</td>
+                <td>{% if session.is_active %}Yes{% else %}No{% endif %}</td>
+                <td>
+                    <a href="{% url 'session_update' session.id %}">Edit</a>
+                    <form method="post" action="{% url 'session_delete' session.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Delete</button>
+                    </form>
+                    {% if not session.is_active %}
+                        <form method="post" action="{% url 'session_activate' session.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">Activate</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No sessions found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% endblock %}

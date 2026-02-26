@@ -1,12 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Academic Session Form</h2>
+<h2>Academic Session</h2>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save</button>
-</form>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Session</button>
+    </form>
+</div>
 
 {% endblock %}

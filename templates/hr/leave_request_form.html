@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Apply Leave</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+        <a href="{% url 'hr_leave_request_list' %}">Back to Leave List</a>
+    </form>
+</div>
+
+{% endblock %}

@@ -40,3 +40,16 @@ class StaffMappingTests(TestCase):
         self.assertIsNotNone(self.staff.user)
         self.assertEqual(self.staff.user.school, self.school)
         self.assertEqual(self.staff.user.role, 'teacher')
+
+    def test_staff_toggle_active_requires_post(self):
+        self.client.login(username='staff_admin', password='pass12345')
+
+        response = self.client.get(reverse('staff_toggle_active', args=[self.staff.id]))
+        self.assertEqual(response.status_code, 405)
+        self.staff.refresh_from_db()
+        self.assertTrue(self.staff.is_active)
+
+        response = self.client.post(reverse('staff_toggle_active', args=[self.staff.id]))
+        self.assertEqual(response.status_code, 302)
+        self.staff.refresh_from_db()
+        self.assertFalse(self.staff.is_active)

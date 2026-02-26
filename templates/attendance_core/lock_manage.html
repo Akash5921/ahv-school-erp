@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Attendance Lock Management</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <h3>Lock Attendance Records</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" name="action" value="lock_records">Lock Records</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Session Lock</h3>
+    {% if selected_session %}
+        <p>
+            <strong>Selected Session:</strong> {{ selected_session.name }} |
+            <strong>Locked:</strong> {% if selected_session.attendance_locked %}Yes{% else %}No{% endif %}
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="session" value="{{ selected_session.id }}">
+            <button type="submit" name="action" value="session_lock">Lock Session Attendance</button>
+            <button type="submit" name="action" value="session_unlock">Unlock Session Attendance</button>
+        </form>
+    {% else %}
+        <p>Select a session in the form above.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>All Session States</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Attendance Locked</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in session_states %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{% if row.attendance_locked %}Yes{% else %}No{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="2">No sessions found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

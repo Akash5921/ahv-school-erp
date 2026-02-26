@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.core.users.audit import log_audit_event
 from apps.core.users.decorators import role_required
@@ -53,18 +54,18 @@ def notice_manage(request):
 
 @login_required
 @role_required('schooladmin')
+@require_POST
 def notice_toggle_publish(request, notice_id):
     notice = get_object_or_404(Notice, id=notice_id, school=request.user.school)
-    if request.method == 'POST':
-        notice.is_published = not notice.is_published
-        notice.save(update_fields=['is_published'])
-        log_audit_event(
-            request=request,
-            action='notice.publish_toggled',
-            school=request.user.school,
-            target=notice,
-            details=f"Published={notice.is_published}",
-        )
+    notice.is_published = not notice.is_published
+    notice.save(update_fields=['is_published'])
+    log_audit_event(
+        request=request,
+        action='notice.publish_toggled',
+        school=request.user.school,
+        target=notice,
+        details=f"Published={notice.is_published}",
+    )
     return redirect('notice_manage')
 
 
@@ -98,19 +99,19 @@ def notice_feed(request):
 
 @login_required
 @role_required(['schooladmin', 'teacher', 'accountant', 'staff', 'parent'])
+@require_POST
 def notice_mark_read(request, notice_id):
     notice = get_object_or_404(_audience_queryset(request.user), id=notice_id)
-    if request.method == 'POST':
-        read_entry, created = NoticeRead.objects.get_or_create(
-            notice=notice,
-            user=request.user
+    read_entry, created = NoticeRead.objects.get_or_create(
+        notice=notice,
+        user=request.user
+    )
+    if created:
+        log_audit_event(
+            request=request,
+            action='notice.read',
+            school=request.user.school,
+            target=notice,
+            details=f"User={request.user.id}",
         )
-        if created:
-            log_audit_event(
-                request=request,
-                action='notice.read',
-                school=request.user.school,
-                target=notice,
-                details=f"User={request.user.id}",
-            )
     return redirect('notice_feed')

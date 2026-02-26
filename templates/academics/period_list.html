@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Period Master</h2>
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>
+                    {{ session.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'period_create' %}">Add Period</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Period #</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for period in periods %}
+            <tr>
+                <td>{{ period.session.name }}</td>
+                <td>{{ period.period_number }}</td>
+                <td>{{ period.start_time }}</td>
+                <td>{{ period.end_time }}</td>
+                <td>{% if period.is_active %}Active{% else %}Inactive{% endif %}</td>
+                <td>
+                    <a href="{% url 'period_update' period.id %}">Edit</a>
+                    {% if period.is_active %}
+                    <form method="post" action="{% url 'period_deactivate' period.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Deactivate</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No periods configured.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

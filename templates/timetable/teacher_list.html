@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>My Timetable</h2>
+
+<div class="card">
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Day</th>
+            <th>Period</th>
+            <th>Time</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Subject</th>
+            <th>Room</th>
+        </tr>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.day_of_week|title }}</td>
+            <td>{{ entry.period_number }}</td>
+            <td>{{ entry.start_time }} - {{ entry.end_time }}</td>
+            <td>{{ entry.school_class.name }}</td>
+            <td>{{ entry.section.name }}</td>
+            <td>{{ entry.subject.name }}</td>
+            <td>{{ entry.room|default:'-' }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No timetable entries assigned.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

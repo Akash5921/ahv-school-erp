@@ -38,7 +38,7 @@ def fee_structure_list(request):
     error = None
 
     if request.method == 'POST':
-        form = FeeStructureForm(request.POST)
+        form = FeeStructureForm(request.POST, school=school)
         bind_school_fee_structure_form(form, school)
         if form.is_valid():
             fee_structure = form.save(commit=False)
@@ -54,7 +54,7 @@ def fee_structure_list(request):
             return redirect('fee_structure_list')
         error = 'Please correct fee structure details.'
     else:
-        form = FeeStructureForm()
+        form = FeeStructureForm(school=school)
         bind_school_fee_structure_form(form, school)
 
     return render(request, 'fees/fee_structure_list.html', {
@@ -124,7 +124,7 @@ def student_fee_manage(request):
     error = None
 
     if request.method == 'POST':
-        form = StudentFeeForm(request.POST)
+        form = StudentFeeForm(request.POST, school=school)
         bind_school_student_fee_form(form, school)
         if form.is_valid():
             cleaned = form.cleaned_data
@@ -147,7 +147,7 @@ def student_fee_manage(request):
             return redirect('student_fee_manage')
         error = 'Please correct student fee details.'
     else:
-        form = StudentFeeForm()
+        form = StudentFeeForm(school=school)
         bind_school_student_fee_form(form, school)
 
     return render(request, 'fees/student_fee_manage.html', {
@@ -165,7 +165,7 @@ def collect_fee(request):
     current_session = school.current_session
 
     if request.method == 'POST':
-        form = FeeCollectionForm(request.POST)
+        form = FeeCollectionForm(request.POST, school=school)
         bind_school_fee_collection_form(form, school)
 
         if not current_session:
@@ -218,7 +218,7 @@ def collect_fee(request):
         elif not error:
             error = 'Please correct fee payment details.'
     else:
-        form = FeeCollectionForm()
+        form = FeeCollectionForm(school=school)
         bind_school_fee_collection_form(form, school)
 
     student_fee_rows = form.fields['student_fee'].queryset

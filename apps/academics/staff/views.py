@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from apps.core.users.decorators import role_required
 from apps.core.users.audit import log_audit_event
 
@@ -140,6 +141,7 @@ def staff_update(request, pk):
 
 @login_required
 @role_required('schooladmin')
+@require_POST
 def staff_toggle_active(request, pk):
     staff_member = get_object_or_404(
         Staff,
@@ -148,6 +150,14 @@ def staff_toggle_active(request, pk):
     )
     staff_member.is_active = not staff_member.is_active
     staff_member.save(update_fields=['is_active'])
+
+    log_audit_event(
+        request=request,
+        action='staff.active_toggled',
+        school=request.user.school,
+        target=staff_member,
+        details=f"Active={staff_member.is_active}",
+    )
     return redirect('staff_list')
 
 

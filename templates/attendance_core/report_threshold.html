@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Attendance Below Threshold</h2>
+
+<div class="card">
+    <form method="get">
+        {{ form.as_p }}
+        <button type="submit">Generate</button>
+        {% if summaries %}
+            <button type="submit" name="export" value="csv">Export CSV</button>
+            <button type="submit" name="export" value="pdf">Export PDF</button>
+        {% endif %}
+    </form>
+</div>
+
+{% if summaries %}
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Admission No</th>
+                    <th>Student</th>
+                    <th>Working Days</th>
+                    <th>Present Days</th>
+                    <th>Attendance %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in summaries %}
+                    <tr>
+                        <td>{{ row.student.admission_number }}</td>
+                        <td>{{ row.student.full_name }}</td>
+                        <td>{{ row.total_working_days }}</td>
+                        <td>{{ row.present_days }}</td>
+                        <td>{{ row.attendance_percentage }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">No students below selected threshold.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% endblock %}

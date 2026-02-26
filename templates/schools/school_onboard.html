@@ -1,13 +1,15 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<h1>Onboard School</h1>
+
+<h1>Onboard New School Tenant</h1>
 
 <div class="card">
+    <p>This creates tenant identity, first academic session, and a school admin account.</p>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Create School</button>
+        <button type="submit">Create School Tenant</button>
     </form>
 </div>
+
 {% endblock %}

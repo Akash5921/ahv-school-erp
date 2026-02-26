@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if student %}Edit Student{% else %}New Admission{% endif %}</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <h3>Student Profile</h3>
+        {{ student_form.as_p }}
+
+        <h3>Parent Information</h3>
+        {{ parent_form.as_p }}
+
+        <button type="submit">Save</button>
+        <a href="{% url 'student_list' %}">Back to Students</a>
+    </form>
+</div>
+
+{% endblock %}

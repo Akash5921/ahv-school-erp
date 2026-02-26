@@ -1,30 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Subjects</h2>
+<h2>Subject Master</h2>
 
-<a href="{% url 'subject_create' %}">Add Subject</a>
+<div class="card">
+    <a href="{% url 'subject_create' %}">Add Subject</a>
+</div>
 
-<table border="1" cellpadding="10">
-<tr>
-    <th>Name</th>
-    <th>Code</th>
-    <th>Class</th>
-    <th>Actions</th>
-</tr>
-
-{% for subject in subjects %}
-<tr>
-    <td>{{ subject.name }}</td>
-    <td>{{ subject.code|default:'-' }}</td>
-    <td>{{ subject.school_class.name }}</td>
-    <td>
-        <a href="{% url 'subject_update' subject.id %}">Edit</a>
-        <a href="{% url 'subject_delete' subject.id %}">Delete</a>
-    </td>
-</tr>
-{% endfor %}
-
-</table>
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Optional</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subject in subjects %}
+            <tr>
+                <td>{{ subject.code }}</td>
+                <td>{{ subject.name }}</td>
+                <td>{{ subject.get_subject_type_display }}</td>
+                <td>{% if subject.is_optional %}Yes{% else %}No{% endif %}</td>
+                <td>{% if subject.is_active %}Active{% else %}Inactive{% endif %}</td>
+                <td>
+                    <a href="{% url 'subject_update' subject.id %}">Edit</a>
+                    {% if subject.is_active %}
+                    <form method="post" action="{% url 'subject_deactivate' subject.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Deactivate</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No subjects defined.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% endblock %}

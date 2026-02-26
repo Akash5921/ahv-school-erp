@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if substitution %}Edit{% else %}Add{% endif %} Substitution</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'hr_substitution_list' %}">Back to Substitutions</a>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if document_type %}Edit{% else %}Add{% endif %} Document Type</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'document_type_list' %}">Back to Document Types</a>
+    </form>
+</div>
+
+{% endblock %}

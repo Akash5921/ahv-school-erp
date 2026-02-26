@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if assignment %}Edit{% else %}Assign{% endif %} Class Teacher</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'hr_class_teacher_list' %}">Back to Class Teachers</a>
+    </form>
+</div>
+
+{% endblock %}

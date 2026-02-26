@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if attendance %}Edit{% else %}Mark{% endif %} Staff Attendance</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'hr_staff_attendance_list' %}">Back to Attendance</a>
+    </form>
+</div>
+
+{% endblock %}

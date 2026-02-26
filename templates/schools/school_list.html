@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<h1>Schools</h1>
+
+<h1>Tenant Schools</h1>
 
 {% if messages %}
     {% for message in messages %}
@@ -10,31 +10,48 @@
 {% endif %}
 
 <div class="card">
-    <a href="{% url 'school_onboard' %}">+ Onboard New School</a>
+    <a href="{% url 'school_onboard' %}">Onboard New School</a>
 </div>
 
 <div class="card">
-    <table border="1" cellpadding="8" cellspacing="0">
-        <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Status</th>
-            <th>Current Session</th>
-        </tr>
-        {% for school in schools %}
-        <tr>
-            <td>{{ school.name }}</td>
-            <td>{{ school.email|default:'-' }}</td>
-            <td>{{ school.phone|default:'-' }}</td>
-            <td>{% if school.is_active %}Active{% else %}Inactive{% endif %}</td>
-            <td>{{ school.current_session|default:'-' }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No schools found.</td>
-        </tr>
-        {% endfor %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Subdomain</th>
+                <th>Primary Domain</th>
+                <th>Users</th>
+                <th>Sessions</th>
+                <th>Current Session</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for school in schools %}
+            <tr>
+                <td>{{ school.name }}</td>
+                <td>{{ school.code }}</td>
+                <td>{{ school.subdomain|default:'-' }}</td>
+                <td>
+                    {% for domain in school.domains.all %}
+                        {{ domain.domain }}{% if domain.is_primary %} (Primary){% endif %}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        -
+                    {% endfor %}
+                </td>
+                <td>{{ school.total_users }}</td>
+                <td>{{ school.total_sessions }}</td>
+                <td>{{ school.current_session|default:'-' }}</td>
+                <td>{% if school.is_active %}Active{% else %}Inactive{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">No schools found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
+
 {% endblock %}

@@ -1,161 +1,208 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AH&V School ERP</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHV School ERP</title>
     <style>
+        :root {
+            --bg: #f3f6fb;
+            --sidebar: #111827;
+            --card: #ffffff;
+            --muted: #6b7280;
+            --line: #dbe2ef;
+            --brand: #2563eb;
+            --danger: #dc2626;
+        }
+
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: #111827;
             display: flex;
+            min-height: 100vh;
         }
 
         .sidebar {
-            width: 230px;
-            background: #1e293b;
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
+            width: 260px;
+            background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+            color: #fff;
+            padding: 24px 16px;
         }
 
-        .sidebar h2 {
-            margin-bottom: 20px;
+        .brand {
+            margin: 0 0 18px;
+            font-size: 1.1rem;
+            letter-spacing: 0.03em;
+        }
+
+        .phase-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            background: rgba(37, 99, 235, 0.3);
+            color: #dbeafe;
+            padding: 3px 8px;
+            border-radius: 999px;
+            margin-bottom: 18px;
         }
 
         .sidebar a {
             display: block;
-            color: white;
+            color: #e5e7eb;
             text-decoration: none;
             margin: 8px 0;
-            padding: 6px;
-            border-radius: 4px;
+            padding: 8px 10px;
+            border-radius: 6px;
         }
 
         .sidebar a:hover {
-            background: #334155;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .logout-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 8px 10px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
         }
 
         .content {
             flex: 1;
-            padding: 30px;
-            background: #f1f5f9;
+            padding: 22px;
         }
 
         .topbar {
-            background: white;
-            padding: 10px 20px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px 16px;
             margin-bottom: 20px;
-            border-radius: 8px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
         }
 
         .card {
-            background: white;
-            padding: 20px;
-            margin: 10px 0;
-            border-radius: 8px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+        }
+
+        th, td {
+            border: 1px solid var(--line);
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eef2ff;
         }
     </style>
 </head>
 <body>
+    <aside class="sidebar">
+        <h2 class="brand">AHV ERP</h2>
+        <div class="phase-badge">{{ erp_phase }}</div>
 
-    <div class="sidebar">
-        <h2>AH&V ERP</h2>
+        {% if request.user.is_authenticated %}
+            {% if request.user.role == 'schooladmin' %}
+                <a href="{% url 'school_dashboard' %}">School Dashboard</a>
+                <a href="{% url 'session_list' %}">Academic Sessions</a>
+                <a href="{% url 'class_list' %}">Class Master</a>
+                <a href="{% url 'section_list' %}">Section Master</a>
+                <a href="{% url 'subject_list' %}">Subject Master</a>
+                <a href="{% url 'class_subject_list' %}">Class-Subject Mapping</a>
+                <a href="{% url 'period_list' %}">Period Master</a>
+                <a href="{% url 'academic_config_list' %}">Academic Config</a>
+                <a href="{% url 'student_list' %}">Students</a>
+                <a href="{% url 'document_type_list' %}">Student Document Types</a>
+                <a href="{% url 'hr_designation_list' %}">Designations</a>
+                <a href="{% url 'hr_staff_list' %}">Staff Profiles</a>
+                <a href="{% url 'hr_teacher_subject_list' %}">Teacher-Subject Allocation</a>
+                <a href="{% url 'hr_class_teacher_list' %}">Class Teachers</a>
+                <a href="{% url 'hr_leave_request_list' %}">Leave Management</a>
+                <a href="{% url 'hr_substitution_list' %}">Substitutions</a>
+                <a href="{% url 'hr_salary_structure_list' %}">Salary Structures</a>
+                <a href="{% url 'timetable_class_grid' %}">Timetable Grid</a>
+                <a href="{% url 'timetable_teacher_view' %}">Teacher Timetable</a>
+                <a href="{% url 'attendance_staff_list' %}">Attendance: Staff</a>
+                <a href="{% url 'attendance_student_daily_mark' %}">Attendance: Student Daily</a>
+                <a href="{% url 'attendance_student_period_mark' %}">Attendance: Student Period</a>
+                <a href="{% url 'attendance_lock_manage' %}">Attendance Locks</a>
+                <a href="{% url 'attendance_report_class' %}">Attendance Report: Class</a>
+                <a href="{% url 'attendance_report_staff' %}">Attendance Report: Staff</a>
+                <a href="{% url 'attendance_report_threshold' %}">Attendance Alert List</a>
+                <a href="{% url 'attendance_report_absentees' %}">Attendance Absentees</a>
+                <a href="{% url 'exam_type_list' %}">Exam Types</a>
+                <a href="{% url 'exam_list_core' %}">Exams</a>
+                <a href="{% url 'grade_scale_list_core' %}">Grade Scales</a>
+                <a href="{% url 'marks_entry_core' %}">Marks Entry</a>
+            {% elif request.user.role == 'superadmin' %}
+                <a href="{% url 'admin:index' %}">Platform Admin</a>
+                <a href="{% url 'school_list' %}">Schools</a>
+                <a href="{% url 'school_onboard' %}">Onboard School</a>
+            {% elif request.user.role == 'teacher' or request.user.role == 'staff' or request.user.role == 'accountant' %}
+                <a href="{% url 'attendance_staff_mark' %}">Mark Attendance</a>
+                <a href="{% url 'attendance_staff_list' %}">My Attendance</a>
+                <a href="{% url 'hr_leave_request_list' %}">My Leave</a>
+                {% if request.user.role == 'teacher' %}
+                    <a href="{% url 'timetable_teacher_view' %}">My Timetable</a>
+                    <a href="{% url 'attendance_student_daily_mark' %}">Class Attendance</a>
+                    <a href="{% url 'attendance_student_period_mark' %}">Period Attendance</a>
+                    <a href="{% url 'attendance_report_class' %}">Class Report</a>
+                    <a href="{% url 'attendance_report_absentees' %}">Absentee List</a>
+                    <a href="{% url 'marks_entry_core' %}">Marks Entry</a>
+                    <a href="{% url 'exam_list_core' %}">Exams</a>
+                {% elif request.user.role == 'accountant' %}
+                    <a href="{% url 'attendance_report_staff' %}">Staff Report</a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'role_workspace' %}">Role Workspace</a>
+            {% endif %}
 
-        {% if request.user.role == 'schooladmin' %}
-            <a href="{% url 'school_dashboard' %}">Dashboard</a>
-            <a href="{% url 'session_list' %}">Academic Sessions</a>
-            <a href="{% url 'student_list' %}">Manage Students</a>
-            <a href="{% url 'grade_scale_list' %}">Grade Scales</a>
-            <a href="{% url 'staff_list' %}">Manage Staff</a>
-            <a href="{% url 'mark_staff_attendance' %}">Staff Attendance</a>
-            <a href="{% url 'monthly_staff_report' %}">Staff Monthly Report</a>
-            <a href="{% url 'notice_manage' %}">Manage Notices</a>
-            <a href="{% url 'class_list' %}">Manage Classes</a>
-            <a href="{% url 'section_list' %}">Manage Sections</a>
-            <a href="{% url 'subject_list' %}">Manage Subjects</a>
-            <a href="{% url 'fee_structure_list' %}">Fee Structures</a>
-            <a href="{% url 'student_fee_manage' %}">Student Fees</a>
-            <a href="{% url 'dues_report' %}">Student Dues</a>
-            <a href="{% url 'salary_structure_manage' %}">Salary Structures</a>
-            <a href="{% url 'inventory_category_list' %}">Inventory Categories</a>
-            <a href="{% url 'inventory_item_list' %}">Inventory Items</a>
-            <a href="{% url 'inventory_purchase' %}">Inventory Purchase</a>
-            <a href="{% url 'transport_bus_list' %}">Transport Buses</a>
-            <a href="{% url 'transport_route_list' %}">Transport Routes</a>
-            <a href="{% url 'transport_student_manage' %}">Student Transport</a>
-            <a href="{% url 'dashboard' %}">Reports Dashboard</a>
-
-
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="logout-btn" type="submit">Logout</button>
+            </form>
         {% endif %}
+    </aside>
 
-        {% if request.user.role == 'teacher' %}
-            <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
-            <a href="{% url 'mark_attendance' %}">Mark Attendance</a>
-            <a href="{% url 'monthly_report' %}">Monthly Report</a>
-            <a href="{% url 'add_marks' %}">Add Marks</a>
-            <a href="{% url 'notice_feed' %}">Notices</a>
-        {% endif %}
-
-        {% if request.user.role == 'accountant' %}
-            <a href="{% url 'accountant_dashboard' %}">Dashboard</a>
-            <a href="{% url 'dues_report' %}">Dues Report</a>
-            <a href="{% url 'collect_fee' %}">Collect Fee</a>
-            <a href="{% url 'pay_salary' %}">Pay Salary</a>
-            <a href="{% url 'notice_feed' %}">Notices</a>
-            <a href="{% url 'dashboard' %}">Reports Dashboard</a>
-        {% endif %}
-
-        {% if request.user.role == 'parent' %}
-            <a href="{% url 'parent_dashboard' %}">Dashboard</a>
-            <a href="{% url 'notice_feed' %}">Notices</a>
-        {% endif %}
-
-        {% if request.user.role == 'staff' %}
-            <a href="{% url 'staff_dashboard' %}">Dashboard</a>
-            <a href="{% url 'notice_feed' %}">Notices</a>
-        {% endif %}
-
-        {% if request.user.role == 'superadmin' %}
-            <a href="{% url 'admin:index' %}">Admin Panel</a>
-            <a href="{% url 'school_list' %}">Manage Schools</a>
-            <a href="{% url 'school_onboard' %}">Onboard School</a>
-        {% endif %}
-
-        <hr>
-        <form method="post" action="{% url 'logout' %}" style="margin-top:15px;">
-            {% csrf_token %}
-            <button type="submit" style="
-                width:100%;
-                padding:6px;
-                background:#dc2626;
-                color:white;
-                border:none;
-                border-radius:4px;
-                cursor:pointer;
-            ">
-                Logout
-            </button>
-        </form>
-    </div>
-
-    <div class="content">
-
-        <div class="topbar">
-            <div>
-                Welcome {{ request.user.username }}
+    <main class="content">
+        {% if request.user.is_authenticated %}
+            <div class="topbar">
+                <div>
+                    <strong>{{ request.user.username }}</strong>
+                    <span class="meta">({{ request.user.role|title }})</span>
+                </div>
+                <div class="meta">
+                    {% if current_school %}School: {{ current_school.name }}{% else %}School: Platform{% endif %}
+                    {% if current_session %} | Session: {{ current_session.name }}{% endif %}
+                </div>
             </div>
-            <div>
-                Role: {{ request.user.role|title }}
-            </div>
-        </div>
+        {% endif %}
 
-        {% block content %}
-        {% endblock %}
-
-    </div>
-
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

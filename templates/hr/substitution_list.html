@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Substitute Teacher Management</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>
+                    {{ session.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Date:</label>
+        <input type="date" name="date" value="{{ selected_date }}">
+
+        <button type="submit">Filter</button>
+        <a href="{% url 'hr_substitution_create' %}">Add Substitution</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Period</th>
+                <th>Class/Section</th>
+                <th>Subject</th>
+                <th>Original Teacher</th>
+                <th>Substitute Teacher</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for substitution in substitutions %}
+                <tr>
+                    <td>{{ substitution.date }}</td>
+                    <td>{{ substitution.period.period_number }}</td>
+                    <td>{{ substitution.school_class.name }} / {{ substitution.section.name }}</td>
+                    <td>{{ substitution.subject.name }}</td>
+                    <td>{{ substitution.original_teacher.full_name }}</td>
+                    <td>{{ substitution.substitute_teacher.full_name }}</td>
+                    <td>{% if substitution.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <a href="{% url 'hr_substitution_update' substitution.id %}">Edit</a>
+                        {% if substitution.is_active %}
+                            <form method="post" action="{% url 'hr_substitution_deactivate' substitution.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No substitutions configured.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

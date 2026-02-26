@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Exams</h2>
+
+<div class="card">
+    <form method="get">
+        <label>Session:</label>
+        <select name="session">
+            <option value="">All</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>
+                    {{ session.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'exam_create_core' %}">Create Exam</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Exam Type</th>
+                <th>Class</th>
+                <th>Section</th>
+                <th>Date Range</th>
+                <th>Total Marks</th>
+                <th>Locked</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exam in exams %}
+                <tr>
+                    <td>{{ exam.exam_type.name }}</td>
+                    <td>{{ exam.school_class.name }}</td>
+                    <td>{{ exam.section.name|default:"All" }}</td>
+                    <td>{{ exam.start_date }} to {{ exam.end_date }}</td>
+                    <td>{{ exam.total_marks }}</td>
+                    <td>{% if exam.is_locked %}Yes{% else %}No{% endif %}</td>
+                    <td>{% if exam.is_active %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'exam_update_core' exam.id %}">Edit</a> |
+                        <a href="{% url 'exam_subject_manage' exam.id %}">Subjects</a> |
+                        <a href="{% url 'marks_entry_core' %}?exam={{ exam.id }}">Marks</a> |
+                        <a href="{% url 'exam_result_summary' exam.id %}">Results</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No exams found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

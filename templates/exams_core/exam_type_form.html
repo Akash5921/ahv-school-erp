@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{% if exam_type %}Update{% else %}Create{% endif %} Exam Type</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'exam_type_list' %}">Back</a>
+    </form>
+</div>
+
+{% endblock %}

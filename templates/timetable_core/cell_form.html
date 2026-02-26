@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Edit Timetable Slot</h2>
+
+<div class="card">
+    <p>
+        <strong>Session:</strong> {{ selected_session.name }} |
+        <strong>Class:</strong> {{ school_class.name }} |
+        <strong>Section:</strong> {{ section.name }} |
+        <strong>Day:</strong> {{ day_label }} |
+        <strong>Period:</strong> P{{ period.period_number }} ({{ period.start_time }} - {{ period.end_time }})
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="view_date" value="{{ view_date|date:'Y-m-d' }}">
+        {{ form.as_p }}
+        <button type="submit">Save Slot</button>
+        <a href="{% url 'timetable_class_grid' %}?session={{ selected_session.id }}&school_class={{ school_class.id }}&section={{ section.id }}&view_date={{ view_date|date:'Y-m-d' }}">Back to Grid</a>
+    </form>
+
+    {% if entry %}
+        <form method="post" action="{% url 'timetable_cell_deactivate' school_class.id section.id day_of_week period.id %}?session={{ selected_session.id }}" style="margin-top:12px;">
+            {% csrf_token %}
+            <input type="hidden" name="view_date" value="{{ view_date|date:'Y-m-d' }}">
+            <button type="submit">Deactivate Slot</button>
+        </form>
+    {% endif %}
+</div>
+
+{% endblock %}

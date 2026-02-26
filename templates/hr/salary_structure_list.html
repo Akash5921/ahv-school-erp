@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Salary Structure Framework</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <h3>Set Salary Structure</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Salary Structure</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Salary Structures</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Staff</th>
+                <th>Basic Salary</th>
+                <th>Effective From</th>
+                <th>Allowances</th>
+                <th>Deductions</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for structure in structures %}
+                <tr>
+                    <td>{{ structure.staff.employee_id }} - {{ structure.staff.full_name }}</td>
+                    <td>{{ structure.basic_salary }}</td>
+                    <td>{{ structure.effective_from }}</td>
+                    <td>{{ structure.allowances }}</td>
+                    <td>{{ structure.deductions }}</td>
+                    <td>{% if structure.is_active %}Yes{% else %}No{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No salary structures configured.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Salary Change History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>When</th>
+                <th>Staff</th>
+                <th>Old Salary</th>
+                <th>New Salary</th>
+                <th>Changed By</th>
+                <th>Reason</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for history in histories %}
+                <tr>
+                    <td>{{ history.changed_on }}</td>
+                    <td>{{ history.staff.employee_id }} - {{ history.staff.full_name }}</td>
+                    <td>{{ history.old_salary }}</td>
+                    <td>{{ history.new_salary }}</td>
+                    <td>{{ history.changed_by.username|default:"system" }}</td>
+                    <td>{{ history.reason|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No salary history yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

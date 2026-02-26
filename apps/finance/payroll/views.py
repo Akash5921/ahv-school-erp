@@ -21,7 +21,7 @@ def salary_structure_manage(request):
     error = None
 
     if request.method == 'POST':
-        form = SalaryStructureForm(request.POST)
+        form = SalaryStructureForm(request.POST, school=school)
         form.fields['staff'].queryset = Staff.objects.filter(
             school=school,
             is_active=True
@@ -43,7 +43,7 @@ def salary_structure_manage(request):
             return redirect('salary_structure_manage')
         error = 'Please correct salary structure details.'
     else:
-        form = SalaryStructureForm()
+        form = SalaryStructureForm(school=school)
         form.fields['staff'].queryset = Staff.objects.filter(
             school=school,
             is_active=True

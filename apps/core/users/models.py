@@ -1,40 +1,57 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager as DjangoUserManager
 from django.db import models
+
 from apps.core.schools.models import School
 
 
+class UserManager(DjangoUserManager):
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('role', 'superadmin')
+        extra_fields['school'] = None
+        return super().create_superuser(username, email=email, password=password, **extra_fields)
+
+
 class User(AbstractUser):
+    ROLE_SUPERADMIN = 'superadmin'
+    ROLE_SCHOOLADMIN = 'schooladmin'
+    ROLE_ACCOUNTANT = 'accountant'
+    ROLE_TEACHER = 'teacher'
+    ROLE_STAFF = 'staff'
+    ROLE_PARENT = 'parent'
 
     ROLE_CHOICES = (
-        ('superadmin', 'Super Admin'),
-        ('schooladmin', 'School Admin'),
-        ('accountant', 'Accountant'),
-        ('teacher', 'Teacher'),
-        ('staff', 'Staff'),
-        ('parent', 'Parent'),
+        (ROLE_SUPERADMIN, 'Super Admin'),
+        (ROLE_SCHOOLADMIN, 'School Admin'),
+        (ROLE_ACCOUNTANT, 'Accountant'),
+        (ROLE_TEACHER, 'Teacher'),
+        (ROLE_STAFF, 'Staff'),
+        (ROLE_PARENT, 'Parent'),
     )
 
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default='teacher'
-    )
-
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_TEACHER)
     school = models.ForeignKey(
         School,
         on_delete=models.CASCADE,
-        null=True,      # Superadmin can be null
-        blank=True
+        null=True,
+        blank=True,
+        related_name='users',
     )
 
-    def save(self, *args, **kwargs):
-        """
-        Enforce:
-        - Superadmin → no school required
-        - All other roles → school required
-        """
+    objects = UserManager()
 
-        if self.role != 'superadmin' and not self.school:
+    class Meta:
+        indexes = [
+            models.Index(fields=['role']),
+            models.Index(fields=['school', 'role']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.is_superuser and self.role != self.ROLE_SUPERADMIN:
+            self.role = self.ROLE_SUPERADMIN
+
+        if self.role == self.ROLE_SUPERADMIN:
+            self.school = None
+        elif not self.school:
             raise ValueError("Non-superadmin users must be assigned to a school.")
 
         super().save(*args, **kwargs)
@@ -70,6 +87,11 @@ class AuditLog(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['school', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['action']),
+        ]
 
     def __str__(self):
         return f"{self.action} by {self.user_id or 'system'}"

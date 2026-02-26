@@ -89,3 +89,43 @@ class CommunicationFlowTests(TestCase):
         self.client.login(username='comm_teacher', password='pass12345')
         response = self.client.get(reverse('notice_manage'))
         self.assertEqual(response.status_code, 403)
+
+    def test_notice_toggle_publish_requires_post(self):
+        notice = Notice.objects.create(
+            school=self.school,
+            title='Publish Toggle',
+            message='Toggle me.',
+            target_role='all',
+            is_published=True,
+            created_by=self.school_admin,
+        )
+
+        self.client.login(username='comm_admin', password='pass12345')
+        response = self.client.get(reverse('notice_toggle_publish', args=[notice.id]))
+        self.assertEqual(response.status_code, 405)
+        notice.refresh_from_db()
+        self.assertTrue(notice.is_published)
+
+        response = self.client.post(reverse('notice_toggle_publish', args=[notice.id]))
+        self.assertEqual(response.status_code, 302)
+        notice.refresh_from_db()
+        self.assertFalse(notice.is_published)
+
+    def test_notice_mark_read_requires_post(self):
+        notice = Notice.objects.create(
+            school=self.school,
+            title='Read Via Post',
+            message='Must be post.',
+            target_role='parent',
+            is_published=True,
+            created_by=self.school_admin,
+        )
+
+        self.client.login(username='comm_parent', password='pass12345')
+        response = self.client.get(reverse('notice_mark_read', args=[notice.id]))
+        self.assertEqual(response.status_code, 405)
+        self.assertFalse(NoticeRead.objects.filter(notice=notice, user=self.parent).exists())
+
+        response = self.client.post(reverse('notice_mark_read', args=[notice.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(NoticeRead.objects.filter(notice=notice, user=self.parent).exists())

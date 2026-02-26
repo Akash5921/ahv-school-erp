@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Staff Profiles</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Status:</label>
+        <select name="status">
+            <option value="">All</option>
+            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+            <option value="resigned" {% if selected_status == 'resigned' %}selected{% endif %}>Resigned</option>
+            <option value="terminated" {% if selected_status == 'terminated' %}selected{% endif %}>Terminated</option>
+        </select>
+        <button type="submit">Filter</button>
+        <a href="{% url 'hr_staff_create' %}">Add Staff</a>
+        <a href="{% url 'hr_designation_list' %}">Designation Master</a>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Designation</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for staff in staff_members %}
+                <tr>
+                    <td>{{ staff.employee_id }}</td>
+                    <td>{{ staff.full_name }}</td>
+                    <td>{{ staff.user.role|title }}</td>
+                    <td>{{ staff.designation.name }}</td>
+                    <td>{{ staff.department|default:"-" }}</td>
+                    <td>{{ staff.get_status_display }}</td>
+                    <td>{% if staff.is_active %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'hr_staff_update' staff.id %}">Edit</a>
+                        {% if staff.is_active %}
+                            <form method="post" action="{% url 'hr_staff_deactivate' staff.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No staff profiles found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

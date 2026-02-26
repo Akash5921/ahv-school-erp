@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.academics.staff.models import Staff
 from apps.academics.students.models import Student
@@ -20,7 +21,7 @@ def bus_list(request):
     error = None
 
     if request.method == 'POST':
-        form = BusForm(request.POST)
+        form = BusForm(request.POST, school=school)
         form.fields['driver'].queryset = Staff.objects.filter(
             school=school,
             staff_type='driver',
@@ -40,7 +41,7 @@ def bus_list(request):
             return redirect('transport_bus_list')
         error = 'Please correct bus details.'
     else:
-        form = BusForm()
+        form = BusForm(school=school)
         form.fields['driver'].queryset = Staff.objects.filter(
             school=school,
             staff_type='driver',
@@ -56,17 +57,17 @@ def bus_list(request):
 
 @login_required
 @role_required('schooladmin')
+@require_POST
 def bus_delete(request, pk):
     bus = get_object_or_404(Bus, pk=pk, school=request.user.school)
-    if request.method == 'POST':
-        log_audit_event(
-            request=request,
-            action='transport.bus_deleted',
-            school=request.user.school,
-            target=bus,
-            details=f"Bus={bus.bus_number}",
-        )
-        bus.delete()
+    log_audit_event(
+        request=request,
+        action='transport.bus_deleted',
+        school=request.user.school,
+        target=bus,
+        details=f"Bus={bus.bus_number}",
+    )
+    bus.delete()
     return redirect('transport_bus_list')
 
 
@@ -106,17 +107,17 @@ def route_list(request):
 
 @login_required
 @role_required('schooladmin')
+@require_POST
 def route_delete(request, pk):
     route = get_object_or_404(Route, pk=pk, school=request.user.school)
-    if request.method == 'POST':
-        log_audit_event(
-            request=request,
-            action='transport.route_deleted',
-            school=request.user.school,
-            target=route,
-            details=f"Route={route.name}",
-        )
-        route.delete()
+    log_audit_event(
+        request=request,
+        action='transport.route_deleted',
+        school=request.user.school,
+        target=route,
+        details=f"Route={route.name}",
+    )
+    route.delete()
     return redirect('transport_route_list')
 
 
@@ -135,7 +136,7 @@ def student_transport_manage(request):
     ).order_by('student__first_name', 'student__last_name') if current_session else []
 
     if request.method == 'POST':
-        form = StudentTransportForm(request.POST)
+        form = StudentTransportForm(request.POST, school=school)
         form.fields['student'].queryset = Student.objects.filter(
             school=school
         ).order_by('first_name', 'last_name')
@@ -180,7 +181,7 @@ def student_transport_manage(request):
         else:
             error = 'Please correct transport assignment details.'
     else:
-        form = StudentTransportForm()
+        form = StudentTransportForm(school=school)
         form.fields['student'].queryset = Student.objects.filter(
             school=school
         ).order_by('first_name', 'last_name')
@@ -201,19 +202,19 @@ def student_transport_manage(request):
 
 @login_required
 @role_required('schooladmin')
+@require_POST
 def student_transport_remove(request, pk):
     assignment = get_object_or_404(
         StudentTransport,
         pk=pk,
         student__school=request.user.school
     )
-    if request.method == 'POST':
-        log_audit_event(
-            request=request,
-            action='transport.student_assignment_removed',
-            school=request.user.school,
-            target=assignment,
-            details=f"Student={assignment.student_id}",
-        )
-        assignment.delete()
+    log_audit_event(
+        request=request,
+        action='transport.student_assignment_removed',
+        school=request.user.school,
+        target=assignment,
+        details=f"Student={assignment.student_id}",
+    )
+    assignment.delete()
     return redirect('transport_student_manage')
