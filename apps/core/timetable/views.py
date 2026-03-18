@@ -118,6 +118,9 @@ def timetable_cell_edit(request, class_id, section_id, day_of_week, period_id):
     if not selected_session:
         messages.error(request, 'Select an academic session first.')
         return redirect('timetable_class_grid')
+    if selected_session.is_locked:
+        messages.error(request, 'Locked sessions are read-only.')
+        return redirect('timetable_class_grid')
 
     school_class = get_object_or_404(SchoolClass, id=class_id, school=school, session=selected_session)
     section = get_object_or_404(Section, id=section_id, school_class=school_class)
@@ -212,6 +215,9 @@ def timetable_cell_deactivate(request, class_id, section_id, day_of_week, period
     if not selected_session:
         messages.error(request, 'Session is required.')
         return redirect('timetable_class_grid')
+    if selected_session.is_locked:
+        messages.error(request, 'Locked sessions are read-only.')
+        return redirect('timetable_class_grid')
 
     school_class = get_object_or_404(SchoolClass, id=class_id, school=school, session=selected_session)
     section = get_object_or_404(Section, id=section_id, school_class=school_class)
@@ -227,16 +233,19 @@ def timetable_cell_deactivate(request, class_id, section_id, day_of_week, period
         period=period,
         is_active=True,
     )
-    entry.delete()
-
-    log_audit_event(
-        request=request,
-        action='timetable.entry_deactivated',
-        school=school,
-        target=entry,
-        details=f"Entry={entry.id}",
-    )
-    messages.success(request, 'Timetable slot deactivated successfully.')
+    try:
+        entry.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='timetable.entry_deactivated',
+            school=school,
+            target=entry,
+            details=f"Entry={entry.id}",
+        )
+        messages.success(request, 'Timetable slot deactivated successfully.')
 
     view_date = _parse_date(request.POST.get('view_date'))
     query = (

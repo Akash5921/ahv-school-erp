@@ -620,6 +620,10 @@ def attendance_lock_manage(request):
         action = request.POST.get('action')
         if form.is_valid():
             selected_session = form.cleaned_data['session']
+            if selected_session.is_locked:
+                messages.error(request, 'Locked academic sessions are read-only.')
+                query = f"session={selected_session.id}"
+                return redirect(f"{reverse('attendance_lock_manage')}?{query}")
 
             if action == 'lock_records':
                 result = lock_attendance_records(

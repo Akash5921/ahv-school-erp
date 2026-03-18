@@ -1,7 +1,7 @@
 """
 Django settings for ahv_erp project.
 
-Phase 6 scope:
+Phase 12 scope:
 - Phase 0 core architecture
 - Phase 1 academic master structures
 - Phase 2 student lifecycle
@@ -9,8 +9,15 @@ Phase 6 scope:
 - Phase 4 timetable engine
 - Phase 5 attendance management
 - Phase 6 examination and result management
+- Phase 7 fee and finance management
+- Phase 8 payroll and salary processing
+- Phase 9 transport and inventory management
+- Phase 10 communication and notification management
+- Phase 11 dashboard, reporting, and analytics
+- Phase 12 academic lifecycle and session management
 """
 import os
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -45,6 +52,13 @@ INSTALLED_APPS = [
     'apps.core.timetable.apps.TimetableConfig',
     'apps.core.attendance.apps.AttendanceConfig',
     'apps.core.exams.apps.ExamsConfig',
+    'apps.core.fees.apps.FeesConfig',
+    'apps.core.promotion.apps.PromotionConfig',
+    'apps.core.transport.apps.TransportConfig',
+    'apps.core.inventory.apps.InventoryConfig',
+    'apps.core.communication.apps.CommunicationConfig',
+    'apps.dashboard.apps.DashboardConfig',
+    'apps.reports.apps.ReportsConfig',
 ]
 
 
@@ -136,3 +150,7 @@ TEST_RUNNER = 'apps.core.test_runner.InstalledAppsOnlyDiscoverRunner'
 
 STAFF_ATTENDANCE_EDIT_WINDOW_HOURS = int(os.getenv('STAFF_ATTENDANCE_EDIT_WINDOW_HOURS', '6'))
 STUDENT_ATTENDANCE_EDIT_WINDOW_DAYS = int(os.getenv('STUDENT_ATTENDANCE_EDIT_WINDOW_DAYS', '2'))
+PAYROLL_ENABLE_ATTENDANCE_DEDUCTION = os.getenv('PAYROLL_ENABLE_ATTENDANCE_DEDUCTION', 'True').lower() in {'1', 'true', 'yes'}
+SALARY_ADVANCE_MAX_PERCENT = int(os.getenv('SALARY_ADVANCE_MAX_PERCENT', '50'))
+PAYROLL_ADVANCE_MONTHLY_DEDUCTION_PERCENT = int(os.getenv('PAYROLL_ADVANCE_MONTHLY_DEDUCTION_PERCENT', '50'))
+LIBRARY_FINE_PER_DAY = Decimal(os.getenv('LIBRARY_FINE_PER_DAY', '5.00'))

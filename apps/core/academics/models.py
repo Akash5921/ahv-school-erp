@@ -22,6 +22,11 @@ DAY_CHOICES = (
 )
 
 
+def _ensure_session_editable(session, message='This academic session is locked.'):
+    if session and session.is_locked:
+        raise ValidationError(message)
+
+
 class SchoolClass(models.Model):
     school = models.ForeignKey(
         School,
@@ -56,8 +61,11 @@ class SchoolClass(models.Model):
         super().clean()
         if self.session_id and self.school_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Selected session does not belong to the selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.sections.exists():
             raise ValidationError('Cannot delete class while sections exist.')
         if self.is_active:
@@ -104,12 +112,14 @@ class Section(models.Model):
 
     def clean(self):
         super().clean()
+        _ensure_session_editable(self.session)
         if self.class_teacher_id:
             if self.class_teacher.school_id != self.school_class.school_id:
                 raise ValidationError({'class_teacher': 'Class teacher must belong to the same school.'})
 
     def delete(self, *args, **kwargs):
         # Student dependency check will be enforced in a later phase.
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -194,6 +204,7 @@ class ClassSubject(models.Model):
 
     def clean(self):
         super().clean()
+        _ensure_session_editable(self.school_class.session)
         if self.school_class_id and self.subject_id:
             if self.school_class.school_id != self.subject.school_id:
                 raise ValidationError({'subject': 'Subject must belong to the same school as the class.'})
@@ -209,6 +220,10 @@ class ClassSubject(models.Model):
 
     def __str__(self):
         return f"{self.school_class.name} -> {self.subject.code}"
+
+    def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.school_class.session)
+        return super().delete(*args, **kwargs)
 
 
 class Period(models.Model):
@@ -247,6 +262,8 @@ class Period(models.Model):
 
         if self.session_id and self.school_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Selected session does not belong to the selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             raise ValidationError({'end_time': 'End time must be after start time.'})
@@ -287,6 +304,7 @@ class Period(models.Model):
         )
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -336,6 +354,8 @@ class AcademicConfig(models.Model):
         super().clean()
         if self.session_id and self.school_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Selected session does not belong to the selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.total_periods_per_day <= 0:
             raise ValidationError({'total_periods_per_day': 'Total periods per day must be greater than zero.'})

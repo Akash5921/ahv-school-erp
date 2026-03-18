@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Communication Reports Dashboard</h3>
+    <form method="get">
+        <label>Session</label>
+        <select name="session">
+            <option value="">All Sessions</option>
+            {% for item in sessions %}
+                <option value="{{ item.id }}" {% if selected_session and selected_session.id == item.id %}selected{% endif %}>{{ item.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+</div>
+
+<div class="card">
+    <h4>Message Stats</h4>
+    <p>Total Messages: {{ message_stats.total }}</p>
+    <p>Unread Messages: {{ message_stats.unread }}</p>
+</div>
+
+<div class="card">
+    <h4>Email Stats</h4>
+    <p>Sent: {{ email_stats.sent|default:0 }}</p>
+    <p>Failed: {{ email_stats.failed|default:0 }}</p>
+</div>
+
+<div class="card">
+    <h4>SMS Stats</h4>
+    <p>Sent: {{ sms_stats.sent|default:0 }}</p>
+    <p>Failed: {{ sms_stats.failed|default:0 }}</p>
+</div>
+
+<div class="card">
+    <h4>Notification Engagement</h4>
+    <p>Total: {{ total_notifications }}</p>
+    <p>Read: {{ read_notifications }}</p>
+    <p>Unread: {{ unread_notifications }}</p>
+</div>
+
+<div class="card">
+    <a href="{% url 'communication_report_messages_core' %}">Message History Report</a><br>
+    <a href="{% url 'communication_report_emails_core' %}">Email Delivery Report</a><br>
+    <a href="{% url 'communication_report_sms_core' %}">SMS Usage Report</a><br>
+    <a href="{% url 'communication_report_notifications_core' %}">Notification Engagement Report</a>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Salary Advance Management</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for row in sessions %}
+                <option value="{{ row.id }}" {% if selected_session and selected_session.id == row.id %}selected{% endif %}>{{ row.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Create Salary Advance</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        {{ create_form.as_p }}
+        <button type="submit">Save Advance</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Advance Requests</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Request Date</th>
+                <th>Staff</th>
+                <th>Session</th>
+                <th>Amount</th>
+                <th>Remaining</th>
+                <th>Status</th>
+                <th>Approved By</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in advances %}
+                <tr>
+                    <td>{{ row.request_date }}</td>
+                    <td>{{ row.staff.employee_id }} - {{ row.staff.full_name }}</td>
+                    <td>{{ row.session.name }}</td>
+                    <td>{{ row.amount }}</td>
+                    <td>{{ row.remaining_balance }}</td>
+                    <td>{{ row.get_status_display }}</td>
+                    <td>{{ row.approved_by.username|default:'-' }}</td>
+                    <td>
+                        {% if row.status == 'pending' %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="status">
+                                <input type="hidden" name="advance_id" value="{{ row.id }}">
+                                <select name="status">
+                                    <option value="approved">Approve</option>
+                                    <option value="rejected">Reject</option>
+                                </select>
+                                <button type="submit">Update</button>
+                            </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No salary advances found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Promotion Dashboard</h2>
+
+{% if messages %}
+    <div class="card">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <p>
+            <label>From Session</label><br>
+            <select name="from_session">
+                <option value="">Select</option>
+                {% for session in sessions %}
+                    <option value="{{ session.id }}" {% if from_session and session.id == from_session.id %}selected{% endif %}>{{ session.name }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <label>To Session</label><br>
+            <select name="to_session">
+                <option value="">Select</option>
+                {% for session in sessions %}
+                    {% if not from_session or session.id != from_session.id %}
+                        <option value="{{ session.id }}" {% if to_session and session.id == to_session.id %}selected{% endif %}>{{ session.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <label>Class</label><br>
+            <select name="school_class">
+                <option value="">All Classes</option>
+                {% for row in classes %}
+                    <option value="{{ row.id }}" {% if selected_class and row.id == selected_class.id %}selected{% endif %}>{{ row.name }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <label>Section</label><br>
+            <select name="section">
+                <option value="">All Sections</option>
+                {% for row in sections %}
+                    <option value="{{ row.id }}" {% if selected_section and row.id == selected_section.id %}selected{% endif %}>{{ row.name }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <button type="submit">Apply Filters</button>
+    </form>
+</div>
+
+{% if from_session and to_session and dashboard %}
+    <div class="card">
+        <h3>Readiness Summary</h3>
+        <p>
+            <strong>From Session:</strong> {{ from_session.name }} |
+            <strong>To Session:</strong> {{ to_session.name }}
+        </p>
+        {% if dashboard.readiness.errors %}
+            <p><strong>Promotion is blocked:</strong></p>
+            {% for error in dashboard.readiness.errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+            <p><a href="{% url 'promotion_lifecycle' %}?session={{ from_session.id }}">Open lifecycle checks</a></p>
+        {% else %}
+            <p>All year-end checks passed. You can process promotion actions below.</p>
+        {% endif %}
+        {% if to_session.is_locked %}
+            <p>Target session is locked and cannot receive promoted students.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="from_session" value="{{ from_session.id }}">
+            <input type="hidden" name="to_session" value="{{ to_session.id }}">
+            {% if selected_class %}<input type="hidden" name="school_class" value="{{ selected_class.id }}">{% endif %}
+            {% if selected_section %}<input type="hidden" name="section" value="{{ selected_section.id }}">{% endif %}
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Current Class</th>
+                        <th>Result</th>
+                        <th>Fee Status</th>
+                        <th>Action</th>
+                        <th>Target Class</th>
+                        <th>Target Section</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in dashboard.rows %}
+                        <tr>
+                            <td>
+                                <input type="hidden" name="student_ids" value="{{ row.student.id }}">
+                                {{ row.student.admission_number }} - {{ row.student.full_name }}
+                            </td>
+                            <td>{{ row.student.current_class|default:"-" }} / {{ row.student.current_section|default:"-" }}</td>
+                            <td>
+                                {% if row.result_summary %}
+                                    {{ row.result_summary.exam.exam_type.name }}: {{ row.result_summary.get_result_status_display }}
+                                {% else %}
+                                    Pending
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.fee_clear %}
+                                    Clear
+                                {% else %}
+                                    Due: {{ row.fee_due }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.existing_record %}
+                                    Saved: {{ row.existing_record.get_status_display }}
+                                {% else %}
+                                    <select name="action_{{ row.student.id }}">
+                                        <option value="skip" selected>Skip</option>
+                                        <option value="promoted">Promote</option>
+                                        <option value="retained">Retain</option>
+                                        <option value="dropped">Drop</option>
+                                    </select>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.existing_record %}
+                                    {{ row.existing_record.to_class|default:"-" }}
+                                {% else %}
+                                    <select name="to_class_{{ row.student.id }}">
+                                        <option value="">Select</option>
+                                        {% for target_class in dashboard.target_classes %}
+                                            <option value="{{ target_class.id }}" {% if row.suggested_class and target_class.id == row.suggested_class.id %}selected{% endif %}>{{ target_class.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.existing_record %}
+                                    {{ row.existing_record.to_section|default:"-" }}
+                                {% else %}
+                                    <select name="to_section_{{ row.student.id }}">
+                                        <option value="">Select</option>
+                                        {% for target_section in dashboard.target_sections %}
+                                            <option value="{{ target_section.id }}" {% if row.suggested_section and target_section.id == row.suggested_section.id %}selected{% endif %}>{{ target_section.school_class.name }} - {{ target_section.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.existing_record %}
+                                    {{ row.existing_record.remarks|default:"-" }}
+                                {% else %}
+                                    <input type="text" name="remarks_{{ row.student.id }}" maxlength="255">
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8">No students found for the selected scope.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if not dashboard.readiness.errors and not from_session.is_locked and not to_session.is_locked and dashboard.rows %}
+                <p style="margin-top: 16px;">
+                    <button type="submit">Process Selected Promotions</button>
+                </p>
+            {% endif %}
+        </form>
+    </div>
+{% else %}
+    <div class="card">
+        <p>Select both a source session and a target session to load the promotion dashboard.</p>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -128,7 +128,10 @@
         {% if request.user.is_authenticated %}
             {% if request.user.role == 'schooladmin' %}
                 <a href="{% url 'school_dashboard' %}">School Dashboard</a>
+                <a href="{% url 'report_index' %}">Advanced Reports</a>
                 <a href="{% url 'session_list' %}">Academic Sessions</a>
+                <a href="{% url 'promotion_lifecycle' %}">Academic Lifecycle</a>
+                <a href="{% url 'promotion_dashboard' %}">Promotion Dashboard</a>
                 <a href="{% url 'class_list' %}">Class Master</a>
                 <a href="{% url 'section_list' %}">Section Master</a>
                 <a href="{% url 'subject_list' %}">Subject Master</a>
@@ -144,6 +147,8 @@
                 <a href="{% url 'hr_leave_request_list' %}">Leave Management</a>
                 <a href="{% url 'hr_substitution_list' %}">Substitutions</a>
                 <a href="{% url 'hr_salary_structure_list' %}">Salary Structures</a>
+                <a href="{% url 'hr_salary_advance_list' %}">Salary Advances</a>
+                <a href="{% url 'hr_payroll_list' %}">Payroll</a>
                 <a href="{% url 'timetable_class_grid' %}">Timetable Grid</a>
                 <a href="{% url 'timetable_teacher_view' %}">Teacher Timetable</a>
                 <a href="{% url 'attendance_staff_list' %}">Attendance: Staff</a>
@@ -158,14 +163,57 @@
                 <a href="{% url 'exam_list_core' %}">Exams</a>
                 <a href="{% url 'grade_scale_list_core' %}">Grade Scales</a>
                 <a href="{% url 'marks_entry_core' %}">Marks Entry</a>
+                <a href="{% url 'fee_type_list_core' %}">Fee Types</a>
+                <a href="{% url 'class_fee_structure_list_core' %}">Class Fee Structure</a>
+                <a href="{% url 'installment_list_core' %}">Installments</a>
+                <a href="{% url 'student_fee_list_core' %}">Student Fees</a>
+                <a href="{% url 'concession_list_core' %}">Concessions</a>
+                <a href="{% url 'payment_manage_core' %}">Fee Collection</a>
+                <a href="{% url 'refund_list_core' %}">Fee Refunds</a>
+                <a href="{% url 'dues_report_core' %}">Dues Report</a>
+                <a href="{% url 'ledger_list_core' %}">Ledger</a>
+                <a href="{% url 'carry_forward_manage_core' %}">Carry Forward Dues</a>
+                <a href="{% url 'transport_driver_list_core' %}">Transport Drivers</a>
+                <a href="{% url 'transport_vehicle_list_core' %}">Transport Vehicles</a>
+                <a href="{% url 'transport_route_list_core' %}">Transport Routes</a>
+                <a href="{% url 'transport_student_allocation_list_core' %}">Student Transport</a>
+                <a href="{% url 'transport_report_route_core' %}">Transport Reports</a>
+                <a href="{% url 'inventory_asset_list_core' %}">Assets</a>
+                <a href="{% url 'inventory_stock_list_core' %}">Stock Items</a>
+                <a href="{% url 'inventory_vendor_list_core' %}">Vendors</a>
+                <a href="{% url 'inventory_purchase_list_core' %}">Purchases</a>
+                <a href="{% url 'inventory_book_list_core' %}">Library Books</a>
+                <a href="{% url 'inventory_book_issue_list_core' %}">Library Issues</a>
+                <a href="{% url 'inventory_report_assets_core' %}">Inventory Reports</a>
+                <a href="{% url 'communication_announcement_list_core' %}">Announcements</a>
+                <a href="{% url 'communication_parent_users_core' %}">Parent Portal Users</a>
+                <a href="{% url 'communication_thread_list_core' %}">Messages</a>
+                <a href="{% url 'communication_notification_list_core' %}">Notifications</a>
+                <a href="{% url 'communication_settings_core' %}">Communication Settings</a>
+                <a href="{% url 'communication_bulk_dispatch_core' %}">Bulk Email/SMS</a>
+                <a href="{% url 'communication_report_dashboard_core' %}">Communication Reports</a>
             {% elif request.user.role == 'superadmin' %}
+                <a href="{% url 'dashboard_super_admin' %}">Platform Dashboard</a>
                 <a href="{% url 'admin:index' %}">Platform Admin</a>
                 <a href="{% url 'school_list' %}">Schools</a>
                 <a href="{% url 'school_onboard' %}">Onboard School</a>
+            {% elif request.user.role == 'principal' %}
+                <a href="{% url 'dashboard_principal' %}">Principal Dashboard</a>
+                <a href="{% url 'report_index' %}">Advanced Reports</a>
             {% elif request.user.role == 'teacher' or request.user.role == 'staff' or request.user.role == 'accountant' %}
+                {% if request.user.role == 'teacher' %}
+                    <a href="{% url 'dashboard_teacher' %}">Teacher Dashboard</a>
+                    <a href="{% url 'report_index' %}">Academic Reports</a>
+                {% elif request.user.role == 'accountant' %}
+                    <a href="{% url 'dashboard_accountant' %}">Accountant Dashboard</a>
+                    <a href="{% url 'report_index' %}">Advanced Reports</a>
+                {% endif %}
                 <a href="{% url 'attendance_staff_mark' %}">Mark Attendance</a>
                 <a href="{% url 'attendance_staff_list' %}">My Attendance</a>
                 <a href="{% url 'hr_leave_request_list' %}">My Leave</a>
+                <a href="{% url 'communication_announcement_feed_core' %}">Announcements</a>
+                <a href="{% url 'communication_thread_list_core' %}">Messages</a>
+                <a href="{% url 'communication_notification_list_core' %}">Notifications</a>
                 {% if request.user.role == 'teacher' %}
                     <a href="{% url 'timetable_teacher_view' %}">My Timetable</a>
                     <a href="{% url 'attendance_student_daily_mark' %}">Class Attendance</a>
@@ -175,8 +223,25 @@
                     <a href="{% url 'marks_entry_core' %}">Marks Entry</a>
                     <a href="{% url 'exam_list_core' %}">Exams</a>
                 {% elif request.user.role == 'accountant' %}
-                    <a href="{% url 'attendance_report_staff' %}">Staff Report</a>
+                    <a href="{% url 'student_fee_list_core' %}">Student Fees</a>
+                    <a href="{% url 'payment_manage_core' %}">Fee Collection</a>
+                    <a href="{% url 'refund_list_core' %}">Fee Refunds</a>
+                    <a href="{% url 'dues_report_core' %}">Dues Report</a>
+                    <a href="{% url 'ledger_list_core' %}">Ledger</a>
+                    <a href="{% url 'hr_salary_advance_list' %}">Salary Advances</a>
+                    <a href="{% url 'hr_payroll_list' %}">Payroll</a>
+                    <a href="{% url 'transport_report_fee_pending_core' %}">Transport Pending</a>
+                    <a href="{% url 'inventory_purchase_list_core' %}">Purchases</a>
+                    <a href="{% url 'inventory_report_purchases_core' %}">Purchase Report</a>
+                    <a href="{% url 'inventory_report_vendor_core' %}">Vendor Report</a>
+                    <a href="{% url 'communication_report_dashboard_core' %}">Communication Reports</a>
                 {% endif %}
+            {% elif request.user.role == 'parent' %}
+                <a href="{% url 'dashboard_parent' %}">Parent Dashboard</a>
+                <a href="{% url 'communication_parent_portal_core' %}">Parent Portal</a>
+                <a href="{% url 'communication_announcement_feed_core' %}">Announcements</a>
+                <a href="{% url 'communication_thread_list_core' %}">Messages</a>
+                <a href="{% url 'communication_notification_list_core' %}">Notifications</a>
             {% else %}
                 <a href="{% url 'role_workspace' %}">Role Workspace</a>
             {% endif %}

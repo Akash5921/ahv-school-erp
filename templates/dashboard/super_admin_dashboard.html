@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 14px; }
+    .metric { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); }
+    .metric span { display: block; color: var(--muted); font-size: 0.82rem; margin-bottom: 6px; }
+    .metric strong { font-size: 1.55rem; }
+    .bar-chart { display: flex; align-items: end; gap: 12px; min-height: 150px; }
+    .bar { flex: 1; min-width: 40px; }
+    .bar-fill { background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border-radius: 10px 10px 0 0; }
+    .bar-label { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+    .line-svg { width: 100%; height: auto; }
+</style>
+
+<h2>Platform Dashboard</h2>
+
+<div class="metric-grid">
+    <div class="metric"><span>Total Schools</span><strong>{{ total_schools }}</strong></div>
+    <div class="metric"><span>Active Schools</span><strong>{{ active_schools }}</strong></div>
+    <div class="metric"><span>Platform Users</span><strong>{{ total_platform_users }}</strong></div>
+    <div class="metric"><span>Active Sessions</span><strong>{{ active_sessions }}</strong></div>
+</div>
+
+<div class="chart-grid">
+    <div class="card">
+        <h3>School Growth</h3>
+        <svg class="line-svg" viewBox="0 0 {{ school_growth_chart.width }} {{ school_growth_chart.height }}">
+            <line x1="20" y1="{{ school_growth_chart.baseline_y }}" x2="{{ school_growth_chart.width|add:'-10' }}" y2="{{ school_growth_chart.baseline_y }}" stroke="#cbd5e1" stroke-width="1" />
+            <polyline points="{{ school_growth_chart.points }}" fill="none" stroke="#2563eb" stroke-width="3" />
+            {% for label in school_growth_chart.labels %}
+                <text x="{{ label.x }}" y="{{ label.y }}" font-size="10" fill="#64748b" text-anchor="middle">{{ label.text }}</text>
+            {% endfor %}
+        </svg>
+    </div>
+    <div class="card">
+        <h3>School Activity</h3>
+        <div class="bar-chart">
+            {% for bar in school_activity_chart %}
+                <div class="bar">
+                    <div class="bar-fill" style="height: {{ bar.height }}px;"></div>
+                    <div class="bar-label">{{ bar.label }}</div>
+                    <div class="bar-label">{{ bar.value }} users</div>
+                </div>
+            {% empty %}
+                <p>No schools available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Recent Schools</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>School</th>
+                <th>Current Session</th>
+                <th>Users</th>
+                <th>Students</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in recent_schools %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.current_session.name|default:"-" }}</td>
+                    <td>{{ row.total_users }}</td>
+                    <td>{{ row.total_students }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No schools found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Recent Platform Audit Events</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>When</th>
+                <th>Action</th>
+                <th>School</th>
+                <th>User</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in recent_audit_logs %}
+                <tr>
+                    <td>{{ log.created_at }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.school.name|default:"Platform" }}</td>
+                    <td>{{ log.user.username|default:"system" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No audit activity recorded.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

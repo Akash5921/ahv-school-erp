@@ -12,6 +12,11 @@ from apps.core.students.models import Student, StudentSessionRecord, StudentSubj
 from apps.core.utils.managers import SchoolManager
 
 
+def _ensure_session_editable(session, message='This academic session is locked.'):
+    if session and session.is_locked:
+        raise ValidationError(message)
+
+
 class ExamType(models.Model):
     school = models.ForeignKey(
         School,
@@ -46,10 +51,13 @@ class ExamType(models.Model):
         super().clean()
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
         if self.weightage is not None and self.weightage < 0:
             raise ValidationError({'weightage': 'Weightage cannot be negative.'})
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -120,6 +128,8 @@ class Exam(models.Model):
         super().clean()
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.exam_type_id:
             if self.exam_type.school_id != self.school_id:
@@ -167,6 +177,7 @@ class Exam(models.Model):
             raise ValidationError('Locked exams cannot be edited.')
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -203,6 +214,7 @@ class ExamSubject(models.Model):
 
     def clean(self):
         super().clean()
+        _ensure_session_editable(self.exam.session)
         if self.exam_id and self.exam.is_locked:
             raise ValidationError('Cannot modify subjects for a locked exam.')
 
@@ -230,6 +242,7 @@ class ExamSubject(models.Model):
             raise ValidationError({'pass_marks': 'Pass marks cannot exceed maximum marks.'})
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.exam.session)
         if self.exam.student_marks.filter(subject=self.subject).exists():
             raise ValidationError('Cannot remove exam subject once marks are entered.')
         if self.is_active:
@@ -277,6 +290,8 @@ class GradeScale(models.Model):
         super().clean()
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.min_percentage < 0 or self.min_percentage > 100:
             raise ValidationError({'min_percentage': 'Min percentage must be between 0 and 100.'})
@@ -296,6 +311,7 @@ class GradeScale(models.Model):
             raise ValidationError('Grade percentage range overlaps with an existing grade scale.')
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -361,6 +377,8 @@ class StudentMark(models.Model):
 
     def clean(self):
         super().clean()
+        if self.session_id:
+            _ensure_session_editable(self.session)
         if self.exam_id:
             if self.exam.school_id != self.school_id:
                 raise ValidationError({'exam': 'Exam must belong to selected school.'})
@@ -487,6 +505,8 @@ class ExamResultSummary(models.Model):
 
     def clean(self):
         super().clean()
+        if self.session_id:
+            _ensure_session_editable(self.session)
         if self.exam_id:
             if self.exam.school_id != self.school_id:
                 raise ValidationError({'exam': 'Exam must belong to selected school.'})

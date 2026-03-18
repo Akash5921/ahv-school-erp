@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -14,6 +15,10 @@ from .forms import (
     DesignationForm,
     LeaveRequestForm,
     LeaveReviewForm,
+    PayrollHoldForm,
+    PayrollProcessForm,
+    SalaryAdvanceForm,
+    SalaryAdvanceStatusForm,
     SalaryStructureForm,
     StaffAttendanceForm,
     StaffForm,
@@ -24,14 +29,31 @@ from .models import (
     ClassTeacher,
     Designation,
     LeaveRequest,
+    Payroll,
     SalaryHistory,
+    SalaryAdvance,
     SalaryStructure,
     Staff,
     StaffAttendance,
     Substitution,
     TeacherSubjectAssignment,
 )
-from .services import mark_staff_attendance, review_leave_request, set_salary_structure, submit_leave_request
+from .services import (
+    create_salary_advance,
+    generate_bulk_payslip_pdf,
+    generate_payslip_pdf,
+    lock_payroll,
+    mark_payroll_paid,
+    mark_staff_attendance,
+    process_monthly_payroll,
+    process_monthly_payroll_for_all,
+    review_leave_request,
+    set_payroll_hold,
+    set_salary_structure,
+    submit_leave_request,
+    unlock_payroll,
+    update_salary_advance_status,
+)
 
 
 def _school_sessions(school):
@@ -40,7 +62,7 @@ def _school_sessions(school):
 
 def _resolve_selected_session(request, school):
     sessions = _school_sessions(school)
-    session_id = request.GET.get('session') or request.POST.get('filter_session')
+    session_id = request.GET.get('session') or request.POST.get('session') or request.POST.get('filter_session')
 
     selected_session = None
     if session_id:
@@ -49,6 +71,24 @@ def _resolve_selected_session(request, school):
         selected_session = sessions.filter(id=school.current_session_id).first()
 
     return sessions, selected_session
+
+
+def _resolve_selected_period(request):
+    today = timezone.localdate()
+    month = request.GET.get('month') or request.POST.get('month')
+    year = request.GET.get('year') or request.POST.get('year')
+    try:
+        month_value = int(month) if month else today.month
+    except (TypeError, ValueError):
+        month_value = today.month
+    try:
+        year_value = int(year) if year else today.year
+    except (TypeError, ValueError):
+        year_value = today.year
+
+    if month_value < 1 or month_value > 12:
+        month_value = today.month
+    return month_value, year_value
 
 
 def _actor_staff(user):
@@ -311,16 +351,19 @@ def hr_teacher_subject_update(request, pk):
 @require_POST
 def hr_teacher_subject_deactivate(request, pk):
     assignment = get_object_or_404(TeacherSubjectAssignment, pk=pk, school=request.user.school)
-    assignment.delete()
-
-    log_audit_event(
-        request=request,
-        action='hr.teacher_subject_deactivated',
-        school=request.user.school,
-        target=assignment,
-        details=f"ID={assignment.id}",
-    )
-    messages.success(request, 'Teacher-subject allocation deactivated successfully.')
+    try:
+        assignment.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='hr.teacher_subject_deactivated',
+            school=request.user.school,
+            target=assignment,
+            details=f"ID={assignment.id}",
+        )
+        messages.success(request, 'Teacher-subject allocation deactivated successfully.')
     return redirect('hr_teacher_subject_list')
 
 
@@ -415,16 +458,19 @@ def hr_class_teacher_update(request, pk):
 @require_POST
 def hr_class_teacher_deactivate(request, pk):
     assignment = get_object_or_404(ClassTeacher, pk=pk, school=request.user.school)
-    assignment.delete()
-
-    log_audit_event(
-        request=request,
-        action='hr.class_teacher_deactivated',
-        school=request.user.school,
-        target=assignment,
-        details=f"ID={assignment.id}",
-    )
-    messages.success(request, 'Class teacher assignment deactivated successfully.')
+    try:
+        assignment.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='hr.class_teacher_deactivated',
+            school=request.user.school,
+            target=assignment,
+            details=f"ID={assignment.id}",
+        )
+        messages.success(request, 'Class teacher assignment deactivated successfully.')
     return redirect('hr_class_teacher_list')
 
 
@@ -789,16 +835,19 @@ def hr_substitution_update(request, pk):
 @require_POST
 def hr_substitution_deactivate(request, pk):
     substitution = get_object_or_404(Substitution, pk=pk, school=request.user.school)
-    substitution.delete()
-
-    log_audit_event(
-        request=request,
-        action='hr.substitution_deactivated',
-        school=request.user.school,
-        target=substitution,
-        details=f"ID={substitution.id}",
-    )
-    messages.success(request, 'Substitution deactivated successfully.')
+    try:
+        substitution.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='hr.substitution_deactivated',
+            school=request.user.school,
+            target=substitution,
+            details=f"ID={substitution.id}",
+        )
+        messages.success(request, 'Substitution deactivated successfully.')
     return redirect('hr_substitution_list')
 
 
@@ -818,8 +867,14 @@ def hr_salary_structure_list(request):
                     school=school,
                     staff=form.cleaned_data['staff'],
                     basic_salary=form.cleaned_data['basic_salary'],
-                    allowances=form.cleaned_data['allowances'],
-                    deductions=form.cleaned_data['deductions'],
+                    hra=form.cleaned_data['hra'] or 0,
+                    da=form.cleaned_data['da'] or 0,
+                    transport_allowance=form.cleaned_data['transport_allowance'] or 0,
+                    other_allowances=form.cleaned_data['other_allowances'],
+                    pf_deduction=form.cleaned_data['pf_deduction'] or 0,
+                    esi_deduction=form.cleaned_data['esi_deduction'] or 0,
+                    professional_tax=form.cleaned_data['professional_tax'] or 0,
+                    other_deductions=form.cleaned_data['other_deductions'],
                     effective_from=form.cleaned_data['effective_from'],
                     changed_by=request.user,
                     reason=form.cleaned_data['reason'],
@@ -851,3 +906,312 @@ def hr_salary_structure_list(request):
         'histories': histories,
         'form': form,
     })
+
+
+@login_required
+@role_required(['schooladmin', 'accountant'])
+def hr_salary_advance_list(request):
+    school = request.user.school
+    sessions, selected_session = _resolve_selected_session(request, school)
+
+    create_form = SalaryAdvanceForm(
+        request.POST if request.method == 'POST' and request.POST.get('action') == 'create' else None,
+        school=school,
+        default_session=selected_session,
+    )
+    status_form = SalaryAdvanceStatusForm(
+        request.POST if request.method == 'POST' and request.POST.get('action') == 'status' else None
+    )
+
+    if request.method == 'POST' and request.POST.get('action') == 'create':
+        if create_form.is_valid():
+            try:
+                advance = create_salary_advance(
+                    school=school,
+                    session=create_form.cleaned_data['session'],
+                    staff=create_form.cleaned_data['staff'],
+                    amount=create_form.cleaned_data['amount'],
+                    request_date=create_form.cleaned_data['request_date'],
+                    approved_by=request.user if create_form.cleaned_data['status'] != SalaryAdvance.STATUS_PENDING else None,
+                    status=create_form.cleaned_data['status'],
+                )
+            except ValidationError as exc:
+                create_form.add_error(None, '; '.join(exc.messages))
+            else:
+                log_audit_event(
+                    request=request,
+                    action='hr.salary_advance_created',
+                    school=school,
+                    target=advance,
+                    details=f"Staff={advance.staff_id}, Amount={advance.amount}, Status={advance.status}",
+                )
+                messages.success(request, 'Salary advance saved successfully.')
+                return redirect('hr_salary_advance_list')
+
+    if request.method == 'POST' and request.POST.get('action') == 'status':
+        advance_id = request.POST.get('advance_id')
+        advance = get_object_or_404(SalaryAdvance, pk=advance_id, school=school)
+        if status_form.is_valid():
+            try:
+                advance = update_salary_advance_status(
+                    salary_advance=advance,
+                    status=status_form.cleaned_data['status'],
+                    approved_by=request.user,
+                )
+            except ValidationError as exc:
+                messages.error(request, '; '.join(exc.messages))
+            else:
+                log_audit_event(
+                    request=request,
+                    action='hr.salary_advance_status_updated',
+                    school=school,
+                    target=advance,
+                    details=f"Status={advance.status}",
+                )
+                messages.success(request, 'Salary advance status updated successfully.')
+                return redirect('hr_salary_advance_list')
+
+    advances = SalaryAdvance.objects.filter(school=school).select_related('session', 'staff', 'staff__user', 'approved_by')
+    if selected_session:
+        advances = advances.filter(session=selected_session)
+
+    return render(request, 'hr/salary_advance_list.html', {
+        'advances': advances.order_by('-request_date', '-id'),
+        'sessions': sessions,
+        'selected_session': selected_session,
+        'create_form': create_form,
+        'status_form': status_form,
+    })
+
+
+@login_required
+@role_required(['schooladmin', 'accountant'])
+def hr_payroll_list(request):
+    school = request.user.school
+    sessions, selected_session = _resolve_selected_session(request, school)
+    selected_month, selected_year = _resolve_selected_period(request)
+
+    process_form = PayrollProcessForm(
+        request.POST if request.method == 'POST' and request.POST.get('action') in {'process', 'process_all'} else None,
+        school=school,
+        default_session=selected_session,
+    )
+    hold_form = PayrollHoldForm(
+        request.POST if request.method == 'POST' and request.POST.get('action') == 'hold' else None
+    )
+
+    if request.method == 'POST' and request.POST.get('action') == 'process':
+        if process_form.is_valid():
+            staff = process_form.cleaned_data['staff']
+            if not staff:
+                process_form.add_error('staff', 'Select a staff member for single payroll processing.')
+            else:
+                try:
+                    payroll = process_monthly_payroll(
+                        school=school,
+                        session=process_form.cleaned_data['session'],
+                        staff=staff,
+                        month=process_form.cleaned_data['month'],
+                        year=process_form.cleaned_data['year'],
+                        processed_by=request.user,
+                    )
+                except ValidationError as exc:
+                    process_form.add_error(None, '; '.join(exc.messages))
+                else:
+                    log_audit_event(
+                        request=request,
+                        action='hr.payroll_processed',
+                        school=school,
+                        target=payroll,
+                        details=f"Staff={payroll.staff_id}, Period={payroll.month:02d}/{payroll.year}",
+                    )
+                    messages.success(request, 'Payroll processed successfully.')
+                    query = f"session={payroll.session_id}&month={payroll.month}&year={payroll.year}"
+                    return redirect(f"{reverse('hr_payroll_list')}?{query}")
+
+    if request.method == 'POST' and request.POST.get('action') == 'process_all':
+        if process_form.is_valid():
+            try:
+                processed_rows, errors = process_monthly_payroll_for_all(
+                    school=school,
+                    session=process_form.cleaned_data['session'],
+                    month=process_form.cleaned_data['month'],
+                    year=process_form.cleaned_data['year'],
+                    processed_by=request.user,
+                )
+            except ValidationError as exc:
+                process_form.add_error(None, '; '.join(exc.messages))
+            else:
+                if processed_rows:
+                    messages.success(request, f'Processed payroll for {len(processed_rows)} staff members.')
+                if errors:
+                    messages.error(request, '; '.join(errors))
+                for payroll in processed_rows:
+                    log_audit_event(
+                        request=request,
+                        action='hr.payroll_processed',
+                        school=school,
+                        target=payroll,
+                        details=f"Staff={payroll.staff_id}, Period={payroll.month:02d}/{payroll.year}",
+                    )
+                query = (
+                    f"session={process_form.cleaned_data['session'].id}"
+                    f"&month={process_form.cleaned_data['month']}&year={process_form.cleaned_data['year']}"
+                )
+                return redirect(f"{reverse('hr_payroll_list')}?{query}")
+
+    if request.method == 'POST' and request.POST.get('action') == 'lock':
+        payroll = get_object_or_404(Payroll, pk=request.POST.get('payroll_id'), school=school)
+        try:
+            lock_payroll(payroll=payroll)
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            log_audit_event(
+                request=request,
+                action='hr.payroll_locked',
+                school=school,
+                target=payroll,
+                details=f"Period={payroll.month:02d}/{payroll.year}",
+            )
+            messages.success(request, 'Payroll locked successfully.')
+        return redirect('hr_payroll_list')
+
+    if request.method == 'POST' and request.POST.get('action') == 'hold':
+        payroll = get_object_or_404(Payroll, pk=request.POST.get('payroll_id'), school=school)
+        if hold_form.is_valid():
+            try:
+                set_payroll_hold(
+                    payroll=payroll,
+                    on_hold=True,
+                    reason=hold_form.cleaned_data['reason'],
+                )
+            except ValidationError as exc:
+                messages.error(request, '; '.join(exc.messages))
+            else:
+                log_audit_event(
+                    request=request,
+                    action='hr.payroll_hold_set',
+                    school=school,
+                    target=payroll,
+                    details=f"Reason={payroll.hold_reason}",
+                )
+                messages.success(request, 'Payroll hold enabled.')
+        return redirect('hr_payroll_list')
+
+    if request.method == 'POST' and request.POST.get('action') == 'release_hold':
+        payroll = get_object_or_404(Payroll, pk=request.POST.get('payroll_id'), school=school)
+        try:
+            set_payroll_hold(payroll=payroll, on_hold=False)
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            log_audit_event(
+                request=request,
+                action='hr.payroll_hold_released',
+                school=school,
+                target=payroll,
+                details='Hold released',
+            )
+            messages.success(request, 'Payroll hold released.')
+        return redirect('hr_payroll_list')
+
+    if request.method == 'POST' and request.POST.get('action') == 'mark_paid':
+        payroll = get_object_or_404(Payroll, pk=request.POST.get('payroll_id'), school=school)
+        try:
+            mark_payroll_paid(payroll=payroll, paid_by=request.user)
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            log_audit_event(
+                request=request,
+                action='hr.payroll_marked_paid',
+                school=school,
+                target=payroll,
+                details=f"PaidOn={payroll.paid_on}",
+            )
+            messages.success(request, 'Payroll marked as paid.')
+        return redirect('hr_payroll_list')
+
+    payroll_rows = Payroll.objects.filter(school=school).select_related('session', 'staff', 'staff__user', 'processed_by', 'paid_by')
+    if selected_session:
+        payroll_rows = payroll_rows.filter(session=selected_session)
+    payroll_rows = payroll_rows.filter(month=selected_month, year=selected_year).order_by('staff__employee_id')
+
+    month_choices = [(idx, f'{idx:02d}') for idx in range(1, 13)]
+    year_choices = sorted({row.year for row in Payroll.objects.filter(school=school)} | {timezone.localdate().year}, reverse=True)
+
+    return render(request, 'hr/payroll_list.html', {
+        'payroll_rows': payroll_rows,
+        'sessions': sessions,
+        'selected_session': selected_session,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'month_choices': month_choices,
+        'year_choices': year_choices,
+        'process_form': process_form,
+        'hold_form': hold_form,
+    })
+
+
+@login_required
+@role_required('superadmin')
+@require_POST
+def hr_payroll_unlock(request, pk):
+    payroll = get_object_or_404(Payroll, pk=pk)
+    try:
+        unlock_payroll(payroll=payroll, allow_override=True)
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='hr.payroll_unlocked_override',
+            school=payroll.school,
+            target=payroll,
+            details='Superadmin override',
+        )
+        messages.success(request, 'Payroll unlocked by super admin override.')
+    return redirect(reverse('admin:index'))
+
+
+@login_required
+@role_required(['schooladmin', 'accountant'])
+def hr_payslip_download(request, payroll_id):
+    payroll = get_object_or_404(
+        Payroll.objects.select_related('school', 'session', 'staff', 'staff__user', 'staff__designation'),
+        pk=payroll_id,
+        school=request.user.school,
+    )
+    pdf_bytes = generate_payslip_pdf(payroll=payroll)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'attachment; filename="payslip_{payroll.staff.employee_id}_{payroll.month:02d}_{payroll.year}.pdf"'
+    )
+    return response
+
+
+@login_required
+@role_required(['schooladmin', 'accountant'])
+def hr_payslip_bulk_download(request):
+    school = request.user.school
+    sessions, selected_session = _resolve_selected_session(request, school)
+    selected_month, selected_year = _resolve_selected_period(request)
+    del sessions  # Selection already resolved from request context.
+
+    payrolls = Payroll.objects.filter(
+        school=school,
+        month=selected_month,
+        year=selected_year,
+    ).select_related('school', 'session', 'staff', 'staff__user', 'staff__designation').order_by('staff__employee_id')
+    if selected_session:
+        payrolls = payrolls.filter(session=selected_session)
+
+    if not payrolls.exists():
+        messages.error(request, 'No payroll rows found for selected filters.')
+        return redirect('hr_payroll_list')
+
+    pdf_bytes = generate_bulk_payslip_pdf(payrolls=payrolls)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="payslips_{selected_month:02d}_{selected_year}.pdf"'
+    return response

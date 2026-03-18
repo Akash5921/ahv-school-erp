@@ -19,6 +19,11 @@ DAY_CHOICES = (
 )
 
 
+def _ensure_session_editable(session, message='This academic session is locked.'):
+    if session and session.is_locked:
+        raise ValidationError(message)
+
+
 class TimetableEntry(models.Model):
     school = models.ForeignKey(
         School,
@@ -83,6 +88,8 @@ class TimetableEntry(models.Model):
 
         if self.session_id and self.school_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.school_class_id:
             if self.school_class.school_id != self.school_id:
@@ -156,6 +163,7 @@ class TimetableEntry(models.Model):
             raise ValidationError({'teacher': 'Teacher is already assigned in another class for this slot.'})
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])

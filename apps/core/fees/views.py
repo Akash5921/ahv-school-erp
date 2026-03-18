@@ -218,15 +218,19 @@ def class_fee_structure_update(request, pk):
 @require_POST
 def class_fee_structure_deactivate(request, pk):
     row = get_object_or_404(ClassFeeStructure, pk=pk, school=request.user.school)
-    row.delete()
-    log_audit_event(
-        request=request,
-        action='fees.class_fee_structure_deactivated',
-        school=request.user.school,
-        target=row,
-        details=f"Class={row.school_class_id}, FeeType={row.fee_type_id}",
-    )
-    messages.success(request, 'Class fee structure deactivated.')
+    try:
+        row.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='fees.class_fee_structure_deactivated',
+            school=request.user.school,
+            target=row,
+            details=f"Class={row.school_class_id}, FeeType={row.fee_type_id}",
+        )
+        messages.success(request, 'Class fee structure deactivated.')
     return redirect(f"{reverse('class_fee_structure_list_core')}?session={row.session_id}")
 
 
@@ -299,15 +303,19 @@ def installment_update(request, pk):
 @require_POST
 def installment_deactivate(request, pk):
     row = get_object_or_404(Installment, pk=pk, school=request.user.school)
-    row.delete()
-    log_audit_event(
-        request=request,
-        action='fees.installment_deactivated',
-        school=request.user.school,
-        target=row,
-        details=f"Name={row.name}",
-    )
-    messages.success(request, 'Installment deactivated.')
+    try:
+        row.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='fees.installment_deactivated',
+            school=request.user.school,
+            target=row,
+            details=f"Name={row.name}",
+        )
+        messages.success(request, 'Installment deactivated.')
     return redirect(f"{reverse('installment_list_core')}?session={row.session_id}")
 
 
@@ -452,16 +460,20 @@ def concession_update(request, pk):
 @require_POST
 def concession_deactivate(request, pk):
     row = get_object_or_404(StudentConcession, pk=pk, school=request.user.school)
-    row.delete()
-    recalculate_student_fee_concessions(student=row.student, session=row.session)
-    log_audit_event(
-        request=request,
-        action='fees.concession_deactivated',
-        school=request.user.school,
-        target=row,
-        details=f"Student={row.student_id}",
-    )
-    messages.success(request, 'Concession deactivated.')
+    try:
+        row.delete()
+        recalculate_student_fee_concessions(student=row.student, session=row.session)
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='fees.concession_deactivated',
+            school=request.user.school,
+            target=row,
+            details=f"Student={row.student_id}",
+        )
+        messages.success(request, 'Concession deactivated.')
     return redirect(f"{reverse('concession_list_core')}?session={row.session_id}")
 
 

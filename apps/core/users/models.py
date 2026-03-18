@@ -14,6 +14,7 @@ class UserManager(DjangoUserManager):
 class User(AbstractUser):
     ROLE_SUPERADMIN = 'superadmin'
     ROLE_SCHOOLADMIN = 'schooladmin'
+    ROLE_PRINCIPAL = 'principal'
     ROLE_ACCOUNTANT = 'accountant'
     ROLE_TEACHER = 'teacher'
     ROLE_STAFF = 'staff'
@@ -22,6 +23,7 @@ class User(AbstractUser):
     ROLE_CHOICES = (
         (ROLE_SUPERADMIN, 'Super Admin'),
         (ROLE_SCHOOLADMIN, 'School Admin'),
+        (ROLE_PRINCIPAL, 'Principal'),
         (ROLE_ACCOUNTANT, 'Accountant'),
         (ROLE_TEACHER, 'Teacher'),
         (ROLE_STAFF, 'Staff'),

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Stock Management</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Stock Item</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Stock Items</h3>
+    <table>
+        <tr>
+            <th>Code</th>
+            <th>Item</th>
+            <th>Category</th>
+            <th>Available</th>
+            <th>Threshold</th>
+            <th>Unit Price</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.item_code }}</td>
+            <td>{{ row.item_name }}</td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.quantity_available }}</td>
+            <td>{{ row.minimum_threshold }}</td>
+            <td>{{ row.unit_price }}</td>
+            <td>{{ row.is_active|yesno:"Active,Inactive" }}</td>
+            <td>
+                <a href="{% url 'inventory_stock_update_core' row.id %}">Edit</a>
+                <form method="post" action="{% url 'inventory_stock_deactivate_core' row.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Deactivate</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">No stock items available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

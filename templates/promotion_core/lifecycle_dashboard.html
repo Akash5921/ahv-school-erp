@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Academic Lifecycle</h2>
+
+{% if messages %}
+    <div class="card">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="card">
+    <h3>Create Next Session</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ init_form.as_p }}
+        <button type="submit">Create Session</button>
+    </form>
+</div>
+
+{% if selected_session %}
+<div class="card">
+    <h3>Year-End Validation: {{ selected_session.name }}</h3>
+    <p>
+        <strong>Locked:</strong> {% if selected_session.is_locked %}Yes{% else %}No{% endif %} |
+        <strong>Attendance Locked:</strong> {% if selected_session.attendance_locked %}Yes{% else %}No{% endif %}
+    </p>
+    {% if readiness %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Check</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Session open</td><td>{% if readiness.checks.session_open %}Ready{% else %}Blocked{% endif %}</td></tr>
+                <tr><td>Exams locked</td><td>{% if readiness.checks.exams_locked %}Ready{% else %}Blocked{% endif %}</td></tr>
+                <tr><td>Results generated</td><td>{% if readiness.checks.results_generated %}Ready{% else %}Blocked{% endif %}</td></tr>
+                <tr><td>Attendance finalized</td><td>{% if readiness.checks.attendance_finalized %}Ready{% else %}Blocked{% endif %}</td></tr>
+                <tr><td>Payroll completed</td><td>{% if readiness.checks.payroll_completed %}Ready{% else %}Blocked{% endif %}</td></tr>
+                <tr><td>Fee-clear rule</td><td>{% if readiness.checks.fees_reviewed %}Ready{% else %}Blocked{% endif %}</td></tr>
+            </tbody>
+        </table>
+        {% if readiness.errors %}
+            <p><strong>Blocking issues:</strong></p>
+            {% for error in readiness.errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Close Session</h3>
+    <form method="post" action="{% url 'promotion_session_close' %}">
+        {% csrf_token %}
+        {{ close_form.as_p }}
+        <button type="submit">Close Session</button>
+    </form>
+    {% if selected_session.is_locked %}
+        <p>This session is already closed. Only super admin can reopen it.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+    <h3>All Sessions</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Dates</th>
+                <th>Active</th>
+                <th>Locked</th>
+                <th>Locked By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for session in sessions %}
+                <tr>
+                    <td>{{ session.name }}</td>
+                    <td>{{ session.start_date }} to {{ session.end_date }}</td>
+                    <td>{% if session.is_active %}Yes{% else %}No{% endif %}</td>
+                    <td>{% if session.is_locked %}Yes{% else %}No{% endif %}</td>
+                    <td>{{ session.locked_by|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'promotion_lifecycle' %}?session={{ session.id }}">Inspect</a>
+                        {% if not session.is_locked %}
+                            | <a href="{% url 'promotion_dashboard' %}?from_session={{ session.id }}">Promotion Board</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No sessions available.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Teacher Dashboard</h2>
+
+<div class="card">
+    <p><strong>Unread Notifications:</strong> {{ unread_notifications }} | <strong>Unread Messages:</strong> {{ unread_messages }}</p>
+    <p><a href="{% url 'report_index' %}">Open academic reports</a></p>
+</div>
+
+<div class="card">
+    <h3>Today's Timetable</h3>
+    <table>
+        <thead>
+            <tr><th>Period</th><th>Class</th><th>Section</th><th>Subject</th></tr>
+        </thead>
+        <tbody>
+            {% for row in today_timetable %}
+                <tr>
+                    <td>P{{ row.period.period_number }}</td>
+                    <td>{{ row.school_class.name }}</td>
+                    <td>{{ row.section.name }}</td>
+                    <td>{{ row.subject.name }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No timetable entries for today.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Pending Attendance</h3>
+    <table>
+        <thead>
+            <tr><th>Class</th><th>Section</th></tr>
+        </thead>
+        <tbody>
+            {% for row in pending_attendance_sections %}
+                <tr>
+                    <td>{{ row.school_class.name }}</td>
+                    <td>{{ row.section.name }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="2">All assigned class attendance is already marked for today.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Student Performance Summary</h3>
+    <table>
+        <thead>
+            <tr><th>Subject</th><th>Average Marks</th><th>Entries</th></tr>
+        </thead>
+        <tbody>
+            {% for row in performance_rows %}
+                <tr>
+                    <td>{{ row.subject__name }}</td>
+                    <td>{{ row.average_marks|floatformat:2 }}</td>
+                    <td>{{ row.entry_count }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No mark data available yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Messages From Parents</h3>
+    <table>
+        <thead>
+            <tr><th>When</th><th>Parent</th><th>Message</th></tr>
+        </thead>
+        <tbody>
+            {% for row in parent_messages %}
+                <tr>
+                    <td>{{ row.sent_at }}</td>
+                    <td>{{ row.sender.username }}</td>
+                    <td>{{ row.message_text|truncatechars:100 }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No parent messages.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Recent Announcements</h3>
+    <ul>
+        {% for row in recent_announcements %}
+            <li><strong>{{ row.title }}</strong> - {{ row.created_at }}</li>
+        {% empty %}
+            <li>No announcements available.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.core.academic_sessions.models import AcademicSession
 from apps.core.academics.models import Period, SchoolClass, Section, Subject
@@ -10,6 +11,7 @@ from .models import (
     ClassTeacher,
     Designation,
     LeaveRequest,
+    SalaryAdvance,
     Staff,
     StaffAttendance,
     Substitution,
@@ -359,8 +361,14 @@ class SubstitutionForm(forms.ModelForm):
 class SalaryStructureForm(forms.Form):
     staff = forms.ModelChoiceField(queryset=Staff.objects.none())
     basic_salary = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0.01)
-    allowances = forms.JSONField(required=False)
-    deductions = forms.JSONField(required=False)
+    hra = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, initial=0)
+    da = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, initial=0)
+    transport_allowance = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, initial=0)
+    other_allowances = forms.JSONField(required=False)
+    pf_deduction = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, initial=0)
+    esi_deduction = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, initial=0)
+    professional_tax = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=False, initial=0)
+    other_deductions = forms.JSONField(required=False)
     effective_from = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     reason = forms.CharField(max_length=255, required=False)
 
@@ -374,18 +382,95 @@ class SalaryStructureForm(forms.Form):
                 is_active=True,
             ).order_by('employee_id')
 
-    def clean_allowances(self):
-        allowances = self.cleaned_data.get('allowances')
+    def clean_other_allowances(self):
+        allowances = self.cleaned_data.get('other_allowances')
         if allowances in [None, '']:
             return {}
         if not isinstance(allowances, dict):
             raise ValidationError('Allowances must be a JSON object.')
         return allowances
 
-    def clean_deductions(self):
-        deductions = self.cleaned_data.get('deductions')
+    def clean_other_deductions(self):
+        deductions = self.cleaned_data.get('other_deductions')
         if deductions in [None, '']:
             return {}
         if not isinstance(deductions, dict):
             raise ValidationError('Deductions must be a JSON object.')
         return deductions
+
+
+class SalaryAdvanceForm(forms.Form):
+    session = forms.ModelChoiceField(queryset=AcademicSession.objects.none())
+    staff = forms.ModelChoiceField(queryset=Staff.objects.none())
+    amount = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0.01)
+    request_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    status = forms.ChoiceField(
+        choices=(
+            (SalaryAdvance.STATUS_PENDING, 'Pending'),
+            (SalaryAdvance.STATUS_APPROVED, 'Approved'),
+            (SalaryAdvance.STATUS_REJECTED, 'Rejected'),
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.school = kwargs.pop('school', None)
+        self.default_session = kwargs.pop('default_session', None)
+        super().__init__(*args, **kwargs)
+
+        self.fields['session'].queryset = AcademicSession.objects.none()
+        self.fields['staff'].queryset = Staff.objects.none()
+        if self.school:
+            self.fields['session'].queryset = _school_sessions(self.school)
+            self.fields['staff'].queryset = Staff.objects.filter(
+                school=self.school,
+                is_active=True,
+                status=Staff.STATUS_ACTIVE,
+            ).order_by('employee_id')
+
+        if self.default_session and not self.is_bound:
+            self.initial.setdefault('session', self.default_session.id)
+        if not self.is_bound:
+            self.initial.setdefault('request_date', timezone.localdate())
+
+
+class SalaryAdvanceStatusForm(forms.Form):
+    status = forms.ChoiceField(
+        choices=(
+            (SalaryAdvance.STATUS_APPROVED, 'Approve'),
+            (SalaryAdvance.STATUS_REJECTED, 'Reject'),
+            (SalaryAdvance.STATUS_ADJUSTED, 'Mark Adjusted'),
+        )
+    )
+
+
+class PayrollProcessForm(forms.Form):
+    session = forms.ModelChoiceField(queryset=AcademicSession.objects.none())
+    month = forms.IntegerField(min_value=1, max_value=12)
+    year = forms.IntegerField(min_value=2000, max_value=2100)
+    staff = forms.ModelChoiceField(queryset=Staff.objects.none(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.school = kwargs.pop('school', None)
+        self.default_session = kwargs.pop('default_session', None)
+        super().__init__(*args, **kwargs)
+
+        self.fields['session'].queryset = AcademicSession.objects.none()
+        self.fields['staff'].queryset = Staff.objects.none()
+        if self.school:
+            self.fields['session'].queryset = _school_sessions(self.school)
+            self.fields['staff'].queryset = Staff.objects.filter(
+                school=self.school,
+                is_active=True,
+                status=Staff.STATUS_ACTIVE,
+            ).order_by('employee_id')
+
+        today = timezone.localdate()
+        if self.default_session and not self.is_bound:
+            self.initial.setdefault('session', self.default_session.id)
+        if not self.is_bound:
+            self.initial.setdefault('month', today.month)
+            self.initial.setdefault('year', today.year)
+
+
+class PayrollHoldForm(forms.Form):
+    reason = forms.CharField(max_length=255)

@@ -14,6 +14,11 @@ from apps.core.students.models import Student, StudentSessionRecord
 from apps.core.utils.managers import SchoolManager
 
 
+def _ensure_session_editable(session, message='This academic session is locked.'):
+    if session and session.is_locked:
+        raise ValidationError(message)
+
+
 class FinancialRecordModel(models.Model):
     class Meta:
         abstract = True
@@ -118,6 +123,8 @@ class ClassFeeStructure(models.Model):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.school_class_id:
             if self.school_class.school_id != self.school_id:
@@ -155,6 +162,7 @@ class ClassFeeStructure(models.Model):
             raise ValidationError('Fee structure cannot be edited after students are assigned for this class-session.')
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -205,6 +213,8 @@ class Installment(models.Model):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.fine_per_day is None or self.fine_per_day < 0:
             raise ValidationError({'fine_per_day': 'Fine per day cannot be negative.'})
@@ -220,6 +230,7 @@ class Installment(models.Model):
             raise ValidationError('Use either split percentage or fixed amount, not both.')
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -292,6 +303,8 @@ class StudentFee(models.Model):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.student_id:
             if self.student.school_id != self.school_id:
@@ -323,6 +336,7 @@ class StudentFee(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -380,6 +394,8 @@ class StudentConcession(models.Model):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.student_id:
             if self.student.school_id != self.school_id:
@@ -401,6 +417,7 @@ class StudentConcession(models.Model):
             raise ValidationError({'fixed_amount': 'Fixed amount must be greater than zero.'})
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -471,9 +488,13 @@ class CarryForwardDue(models.Model):
 
         if self.from_session_id and self.from_session.school_id != self.school_id:
             raise ValidationError({'from_session': 'From session must belong to selected school.'})
+        if self.from_session_id:
+            _ensure_session_editable(self.from_session)
 
         if self.to_session_id and self.to_session.school_id != self.school_id:
             raise ValidationError({'to_session': 'To session must belong to selected school.'})
+        if self.to_session_id:
+            _ensure_session_editable(self.to_session)
 
         if self.from_session_id and self.to_session_id and self.from_session_id == self.to_session_id:
             raise ValidationError('From session and to session must be different.')
@@ -566,6 +587,8 @@ class FeePayment(FinancialRecordModel):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.student_id:
             if self.student.school_id != self.school_id:
@@ -667,6 +690,7 @@ class FeePaymentAllocation(FinancialRecordModel):
 
     def clean(self):
         super().clean()
+        _ensure_session_editable(self.payment.session)
 
         has_student_fee = self.student_fee_id is not None
         has_carry_due = self.carry_forward_due_id is not None
@@ -729,6 +753,8 @@ class FeeReceipt(FinancialRecordModel):
 
     def clean(self):
         super().clean()
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.payment_id:
             if self.payment.school_id != self.school_id:
@@ -799,6 +825,8 @@ class FeeRefund(FinancialRecordModel):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.student_id:
             if self.student.school_id != self.school_id:
@@ -923,6 +951,8 @@ class LedgerEntry(FinancialRecordModel):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if not self.reference_model:
             raise ValidationError({'reference_model': 'Reference model is required.'})

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Edit Driver</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Driver</button>
+        <a href="{% url 'transport_driver_list_core' %}">Back</a>
+    </form>
+</div>
+{% endblock %}

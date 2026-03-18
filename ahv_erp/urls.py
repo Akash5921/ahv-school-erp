@@ -19,6 +19,13 @@ urlpatterns = [
     path('timetable/', include('apps.core.timetable.urls')),
     path('attendance/', include('apps.core.attendance.urls')),
     path('exams/', include('apps.core.exams.urls')),
+    path('fees/', include('apps.core.fees.urls')),
+    path('promotion/', include('apps.core.promotion.urls')),
+    path('transport/', include('apps.core.transport.urls')),
+    path('inventory/', include('apps.core.inventory.urls')),
+    path('communication/', include('apps.core.communication.urls')),
+    path('analytics/', include('apps.dashboard.urls')),
+    path('reports/', include('apps.reports.urls')),
 ]
 
 if settings.DEBUG:

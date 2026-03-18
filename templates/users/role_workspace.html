@@ -4,18 +4,41 @@
 <h2>{{ role|title }} Workspace</h2>
 
 <div class="card">
-    <p>This role is authenticated and tenant-aware in Phase 0.</p>
-    <p>Feature modules for academics, finance, and operations are intentionally deferred.</p>
+    <p>This workspace is tenant-aware and communication-enabled.</p>
+    <p><strong>Unread Notifications:</strong> {{ unread_notifications }}</p>
+    <p><strong>Unread Messages:</strong> {{ unread_messages }}</p>
+    <p>
+        <a href="{% url 'communication_announcement_feed_core' %}">Announcements</a> |
+        <a href="{% url 'communication_thread_list_core' %}">Messages</a> |
+        <a href="{% url 'communication_notification_list_core' %}">Notifications</a>
+        {% if role == 'parent' %}| <a href="{% url 'communication_parent_portal_core' %}">Parent Portal</a>{% endif %}
+    </p>
 </div>
 
 <div class="card">
-    <h3>Phase 0 Ready Components</h3>
-    <ul>
-        <li>Tenant identity and school lifecycle</li>
-        <li>Tenant domain mapping</li>
-        <li>Session lifecycle and active session controls</li>
-        <li>Role-based access control and audit logging</li>
-    </ul>
+    <h3>Latest Announcements</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Posted</th>
+                <th>Expires</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in announcements %}
+                <tr>
+                    <td>{{ row.title }}</td>
+                    <td>{{ row.created_at }}</td>
+                    <td>{{ row.expires_at|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No active announcements.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 {% endblock %}

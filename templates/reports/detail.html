@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ report.title }}</h2>
+
+<div class="card">
+    <form method="get">
+        <label>Session</label>
+        <select name="session">
+            <option value="">Current</option>
+            {% for row in filters.sessions %}
+                <option value="{{ row.id }}"{% if filters.session and filters.session.id == row.id %} selected{% endif %}>{{ row.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Class</label>
+        <select name="school_class">
+            <option value="">All</option>
+            {% for row in filters.classes %}
+                <option value="{{ row.id }}"{% if filters.school_class and filters.school_class.id == row.id %} selected{% endif %}>{{ row.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Section</label>
+        <select name="section">
+            <option value="">All</option>
+            {% for row in filters.sections %}
+                <option value="{{ row.id }}"{% if filters.section and filters.section.id == row.id %} selected{% endif %}>{{ row.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Student</label>
+        <select name="student">
+            <option value="">All</option>
+            {% for row in filters.students %}
+                <option value="{{ row.id }}"{% if filters.student and filters.student.id == row.id %} selected{% endif %}>{{ row.admission_number }} - {{ row.full_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Staff</label>
+        <select name="staff">
+            <option value="">All</option>
+            {% for row in filters.staff_members %}
+                <option value="{{ row.id }}"{% if filters.staff and filters.staff.id == row.id %} selected{% endif %}>{{ row.employee_id }} - {{ row.full_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Exam</label>
+        <select name="exam">
+            <option value="">All</option>
+            {% for row in filters.exams %}
+                <option value="{{ row.id }}"{% if filters.exam and filters.exam.id == row.id %} selected{% endif %}>{{ row.exam_type.name }} - {{ row.school_class.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Date From</label>
+        <input type="date" name="date_from" value="{{ filters.date_from|date:'Y-m-d' }}">
+        <label>Date To</label>
+        <input type="date" name="date_to" value="{{ filters.date_to|date:'Y-m-d' }}">
+        <label>Month</label>
+        <input type="number" min="1" max="12" name="month" value="{{ filters.month }}">
+        <label>Year</label>
+        <input type="number" min="2000" max="2100" name="year" value="{{ filters.year }}">
+        <button type="submit">Apply Filters</button>
+    </form>
+    {% if filters.read_only %}
+        <p class="meta">This session is locked. view-only access is enabled and exports are disabled.</p>
+    {% else %}
+        <p><a href="?{{ export_pdf_query }}">Export PDF</a> | <a href="?{{ export_xlsx_query }}">Export Excel</a></p>
+    {% endif %}
+</div>
+
+{% if report.summary %}
+<div class="card">
+    <h3>Summary</h3>
+    {% for label, value in report.summary %}
+        <p><strong>{{ label }}:</strong> {{ value }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                {% for heading in report.columns %}
+                    <th>{{ heading }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in display_rows %}
+                <tr>
+                    {% for value in row %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% empty %}
+                <tr><td colspan="{{ report.columns|length }}">No data found for the selected filters.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="card">
+    <p>
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        {% if page_obj.has_previous %}
+            | <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            | <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </p>
+</div>
+{% endif %}
+{% endblock %}

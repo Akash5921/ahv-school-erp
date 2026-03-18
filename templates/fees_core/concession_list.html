@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Concession & Scholarship</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+
+    <form method="get">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for s in sessions %}
+                <option value="{{ s.id }}" {% if selected_session and selected_session.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <hr>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Concession</button>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Session</th>
+                <th>Fee Type</th>
+                <th>Percentage</th>
+                <th>Fixed Amount</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.student.admission_number }}</td>
+                    <td>{{ row.session.name }}</td>
+                    <td>{{ row.fee_type.name|default:'All' }}</td>
+                    <td>{{ row.percentage|default:'-' }}</td>
+                    <td>{{ row.fixed_amount|default:'-' }}</td>
+                    <td>{{ row.reason|default:'-' }}</td>
+                    <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <a href="{% url 'concession_update_core' row.id %}">Edit</a>
+                        {% if row.is_active %}
+                            <form method="post" action="{% url 'concession_deactivate_core' row.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8">No concessions found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

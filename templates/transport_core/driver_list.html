@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Driver Management</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Driver</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Drivers</h3>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>License</th>
+            <th>Phone</th>
+            <th>Joining Date</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.name }}</td>
+            <td>{{ row.license_number }}</td>
+            <td>{{ row.phone }}</td>
+            <td>{{ row.joining_date }}</td>
+            <td>{{ row.is_active|yesno:"Active,Inactive" }}</td>
+            <td>
+                <a href="{% url 'transport_driver_update_core' row.id %}">Edit</a>
+                <form method="post" action="{% url 'transport_driver_deactivate_core' row.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Deactivate</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No drivers available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

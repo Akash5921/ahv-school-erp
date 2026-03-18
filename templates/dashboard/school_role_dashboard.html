@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 14px; }
+    .metric { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); }
+    .metric span { display: block; color: var(--muted); font-size: 0.82rem; margin-bottom: 6px; }
+    .metric strong { font-size: 1.45rem; }
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .bar-chart { display: flex; align-items: end; gap: 12px; min-height: 150px; }
+    .bar { flex: 1; min-width: 40px; }
+    .bar-fill { background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border-radius: 10px 10px 0 0; }
+    .bar-label { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+    .line-svg { width: 100%; height: auto; }
+    .pie { width: 180px; height: 180px; border-radius: 50%; margin: 8px auto 14px; }
+</style>
+
+<h2>{{ page_title }}</h2>
+<p class="meta">{{ page_intro }}</p>
+
+<div class="metric-grid">
+    <div class="metric"><span>Total Students</span><strong>{{ total_students }}</strong></div>
+    <div class="metric"><span>Total Staff</span><strong>{{ total_staff }}</strong></div>
+    <div class="metric"><span>Today Attendance %</span><strong>{{ today_attendance_pct }}</strong></div>
+    <div class="metric"><span>Fee Collected This Month</span><strong>{{ fee_collected_this_month }}</strong></div>
+    <div class="metric"><span>Pending Fee Amount</span><strong>{{ pending_fee_amount }}</strong></div>
+    <div class="metric"><span>Monthly Salary Expense</span><strong>{{ monthly_salary_expense }}</strong></div>
+</div>
+
+<div class="card">
+    <p><strong>Unread Notifications:</strong> {{ unread_notifications }} | <strong>Unread Messages:</strong> {{ unread_messages }}</p>
+    <p><a href="{% url 'report_index' %}">Open advanced reports</a></p>
+    {% if latest_locked_exam %}
+        <p><strong>Latest Published Exam:</strong> {{ latest_locked_exam.exam_type.name }} | <strong>Pass Rate:</strong> {{ latest_exam_pass_rate }}%</p>
+    {% endif %}
+    {% if recent_announcements %}
+        <p><strong>Latest Announcement:</strong> {{ recent_announcements.0.title }}</p>
+    {% endif %}
+</div>
+
+<div class="chart-grid">
+    <div class="card">
+        <h3>Fee Collection Trend</h3>
+        <svg class="line-svg" viewBox="0 0 {{ fee_trend_chart.width }} {{ fee_trend_chart.height }}">
+            <line x1="20" y1="{{ fee_trend_chart.baseline_y }}" x2="{{ fee_trend_chart.width|add:'-10' }}" y2="{{ fee_trend_chart.baseline_y }}" stroke="#cbd5e1" stroke-width="1" />
+            <polyline points="{{ fee_trend_chart.points }}" fill="none" stroke="#2563eb" stroke-width="3" />
+            {% for label in fee_trend_chart.labels %}
+                <text x="{{ label.x }}" y="{{ label.y }}" font-size="10" fill="#64748b" text-anchor="middle">{{ label.text }}</text>
+            {% endfor %}
+        </svg>
+    </div>
+    <div class="card">
+        <h3>Class Strength</h3>
+        <div class="bar-chart">
+            {% for bar in class_strength_chart %}
+                <div class="bar">
+                    <div class="bar-fill" style="height: {{ bar.height }}px;"></div>
+                    <div class="bar-label">{{ bar.label }}</div>
+                    <div class="bar-label">{{ bar.value }}</div>
+                </div>
+            {% empty %}
+                <p>No current class data.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <h3>Fee Paid vs Pending</h3>
+        <div class="pie" style="background: {{ fee_split_chart.style }};"></div>
+        {% for segment in fee_split_chart.segments %}
+            <p><strong style="color: {{ segment.color }};">{{ segment.label }}</strong>: {{ segment.value }} ({{ segment.percent }}%)</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <h3>Upcoming Exam</h3>
+    {% if upcoming_exam %}
+        <p><strong>{{ upcoming_exam.exam_type.name }}</strong> for {{ upcoming_exam.school_class.name }}{% if upcoming_exam.section_id %} - {{ upcoming_exam.section.name }}{% endif %} starts on {{ upcoming_exam.start_date }}.</p>
+    {% else %}
+        <p>No upcoming exam scheduled.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Recent Announcements</h3>
+    <table>
+        <thead>
+            <tr><th>Title</th><th>Target</th><th>Posted</th></tr>
+        </thead>
+        <tbody>
+            {% for row in recent_announcements %}
+                <tr>
+                    <td>{{ row.title }}</td>
+                    <td>{{ row.get_target_role_display }}</td>
+                    <td>{{ row.created_at }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No active announcements.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if recent_parent_messages %}
+<div class="card">
+    <h3>Recent Parent Messages</h3>
+    <table>
+        <thead>
+            <tr><th>When</th><th>From</th><th>To</th><th>Message</th></tr>
+        </thead>
+        <tbody>
+            {% for row in recent_parent_messages %}
+                <tr>
+                    <td>{{ row.sent_at }}</td>
+                    <td>{{ row.sender.username }}</td>
+                    <td>{{ row.receiver.username }}</td>
+                    <td>{{ row.message_text|truncatechars:90 }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No parent messages.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if recent_ledger_entries %}
+<div class="card">
+    <h3>Recent Ledger Entries</h3>
+    <table>
+        <thead>
+            <tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th></tr>
+        </thead>
+        <tbody>
+            {% for row in recent_ledger_entries %}
+                <tr>
+                    <td>{{ row.date }}</td>
+                    <td>{{ row.get_transaction_type_display }}</td>
+                    <td>{{ row.reference_model }} #{{ row.reference_id }}</td>
+                    <td>{{ row.amount }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No ledger entries.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

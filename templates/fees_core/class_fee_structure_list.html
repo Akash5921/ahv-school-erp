@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Class Fee Structure</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+
+    <form method="get">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for s in sessions %}
+                <option value="{{ s.id }}" {% if selected_session and selected_session.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <hr>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Structure</button>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Class</th>
+                <th>Fee Type</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.session.name }}</td>
+                    <td>{{ row.school_class.name }}</td>
+                    <td>{{ row.fee_type.name }}</td>
+                    <td>{{ row.amount }}</td>
+                    <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <a href="{% url 'class_fee_structure_update_core' row.id %}">Edit</a>
+                        {% if row.is_active %}
+                            <form method="post" action="{% url 'class_fee_structure_deactivate_core' row.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6">No class fee structures found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

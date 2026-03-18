@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 14px; }
+    .metric { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); }
+    .metric span { display: block; color: var(--muted); font-size: 0.82rem; margin-bottom: 6px; }
+    .metric strong { font-size: 1.45rem; }
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .bar-chart { display: flex; align-items: end; gap: 12px; min-height: 150px; }
+    .bar { flex: 1; min-width: 40px; }
+    .bar-fill { background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border-radius: 10px 10px 0 0; }
+    .bar-label { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+    .line-svg { width: 100%; height: auto; }
+    .pie { width: 180px; height: 180px; border-radius: 50%; margin: 8px auto 14px; }
+</style>
 
 <h2>School Foundation Dashboard</h2>
 
@@ -7,29 +20,68 @@
     <strong>Tenant:</strong> {{ school.name }}<br>
     <strong>Code:</strong> {{ school.code }}<br>
     <strong>Subdomain:</strong> {{ school.subdomain|default:"-" }}<br>
-    <strong>Timezone:</strong> {{ school.timezone }}
+    <strong>Timezone:</strong> {{ school.timezone }}<br>
+    <strong>Current Session:</strong> {{ active_session.name|default:"No active session" }}
+</div>
+
+<div class="metric-grid">
+    <div class="metric"><span>Total Students</span><strong>{{ total_students }}</strong></div>
+    <div class="metric"><span>Total Staff</span><strong>{{ total_staff }}</strong></div>
+    <div class="metric"><span>Today Attendance %</span><strong>{{ today_attendance_pct }}</strong></div>
+    <div class="metric"><span>Fee Collected This Month</span><strong>{{ fee_collected_this_month }}</strong></div>
+    <div class="metric"><span>Pending Fee Amount</span><strong>{{ pending_fee_amount }}</strong></div>
+    <div class="metric"><span>Monthly Salary Expense</span><strong>{{ monthly_salary_expense }}</strong></div>
 </div>
 
 <div class="card">
-    <h3>Core Metrics</h3>
-    <p><strong>Total Users:</strong> {{ total_users }}</p>
-    <p><strong>Active Users:</strong> {{ active_users }}</p>
-    <p><strong>Total Sessions:</strong> {{ total_sessions }}</p>
-    <p><strong>Current Session:</strong> {{ active_session.name|default:"No active session" }}</p>
-</div>
-
-<div class="card">
-    <h3>Phase 1 Academic Setup (Current Session)</h3>
-    {% if active_session %}
-        <p><strong>Active Subjects:</strong> {{ total_subjects }}</p>
-        <p><strong>Classes:</strong> {{ class_count }}</p>
-        <p><strong>Sections:</strong> {{ section_count }}</p>
-        <p><strong>Class-Subject Mappings:</strong> {{ mapping_count }}</p>
-        <p><strong>Periods:</strong> {{ period_count }}</p>
-        <p><strong>Academic Config:</strong> {% if has_config %}Configured{% else %}Missing{% endif %}</p>
+    <h3>Communication Snapshot</h3>
+    <p><strong>Total Users:</strong> {{ total_users }} | <strong>Active Users:</strong> {{ active_users }} | <strong>Total Sessions:</strong> {{ total_sessions }}</p>
+    <p><strong>Unread Notifications:</strong> {{ unread_notifications }} | <strong>Unread Messages:</strong> {{ unread_messages }}</p>
+    <p>
+        <a href="{% url 'report_index' %}">Open advanced reports</a> |
+        <a href="{% url 'communication_announcement_list_core' %}">Manage announcements</a> |
+        <a href="{% url 'communication_thread_list_core' %}">Open messages</a> |
+        <a href="{% url 'communication_notification_list_core' %}">View notifications</a>
+    </p>
+    {% if upcoming_exam %}
+        <p><strong>Upcoming Exam:</strong> {{ upcoming_exam.exam_type.name }} for {{ upcoming_exam.school_class.name }}{% if upcoming_exam.section_id %} - {{ upcoming_exam.section.name }}{% endif %} on {{ upcoming_exam.start_date }}</p>
     {% else %}
-        <p>Select or activate a session first, then configure academic masters.</p>
+        <p><strong>Upcoming Exam:</strong> None scheduled.</p>
     {% endif %}
+</div>
+
+<div class="chart-grid">
+    <div class="card">
+        <h3>Fee Collection Trend</h3>
+        <svg class="line-svg" viewBox="0 0 {{ fee_trend_chart.width }} {{ fee_trend_chart.height }}">
+            <line x1="20" y1="{{ fee_trend_chart.baseline_y }}" x2="{{ fee_trend_chart.width|add:'-10' }}" y2="{{ fee_trend_chart.baseline_y }}" stroke="#cbd5e1" stroke-width="1" />
+            <polyline points="{{ fee_trend_chart.points }}" fill="none" stroke="#2563eb" stroke-width="3" />
+            {% for label in fee_trend_chart.labels %}
+                <text x="{{ label.x }}" y="{{ label.y }}" font-size="10" fill="#64748b" text-anchor="middle">{{ label.text }}</text>
+            {% endfor %}
+        </svg>
+    </div>
+    <div class="card">
+        <h3>Class Strength</h3>
+        <div class="bar-chart">
+            {% for bar in class_strength_chart %}
+                <div class="bar">
+                    <div class="bar-fill" style="height: {{ bar.height }}px;"></div>
+                    <div class="bar-label">{{ bar.label }}</div>
+                    <div class="bar-label">{{ bar.value }}</div>
+                </div>
+            {% empty %}
+                <p>No class strength data available.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <h3>Fee Paid vs Pending</h3>
+        <div class="pie" style="background: {{ fee_split_chart.style }};"></div>
+        {% for segment in fee_split_chart.segments %}
+            <p><strong style="color: {{ segment.color }};">{{ segment.label }}</strong>: {{ segment.value }} ({{ segment.percent }}%)</p>
+        {% endfor %}
+    </div>
 </div>
 
 <div class="card">
@@ -50,6 +102,58 @@
             {% empty %}
                 <tr>
                     <td colspan="2">No users mapped to this school yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Recent Receipts</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Receipt</th>
+                <th>Student</th>
+                <th>Generated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in recent_receipts %}
+                <tr>
+                    <td>{{ row.receipt_number }}</td>
+                    <td>{{ row.student.full_name }}</td>
+                    <td>{{ row.generated_at }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No receipts generated yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Recent Announcements</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Target</th>
+                <th>Posted</th>
+                <th>Expires</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in recent_announcements %}
+                <tr>
+                    <td>{{ row.title }}</td>
+                    <td>{{ row.get_target_role_display }}</td>
+                    <td>{{ row.created_at }}</td>
+                    <td>{{ row.expires_at|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">No active announcements for this dashboard.</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -109,5 +213,4 @@
         </tbody>
     </table>
 </div>
-
 {% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Student Transport Allocation</h2>
+    <form method="get" style="margin-bottom:10px;">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="assign">
+        {{ form.as_p }}
+        <button type="submit">Save Allocation</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Allocations</h3>
+    <table>
+        <tr>
+            <th>Student</th>
+            <th>Session</th>
+            <th>Route</th>
+            <th>Stop</th>
+            <th>Pickup</th>
+            <th>Drop</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.student.admission_number }} - {{ row.student.full_name }}</td>
+            <td>{{ row.session.name }}</td>
+            <td>{{ row.route.route_name }}</td>
+            <td>{{ row.stop_name }}</td>
+            <td>{{ row.pickup_time|default:"-" }}</td>
+            <td>{{ row.drop_time|default:"-" }}</td>
+            <td>{{ row.transport_fee }}</td>
+            <td>{{ row.is_active|yesno:"Active,Inactive" }}</td>
+            <td>
+                {% if row.is_active %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="deactivate">
+                    <input type="hidden" name="allocation_id" value="{{ row.id }}">
+                    <button type="submit">Deactivate</button>
+                </form>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9">No allocations available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

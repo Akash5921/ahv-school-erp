@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Thread: {{ thread.subject }}</h3>
+    <p>Created by: {{ thread.created_by.username }} | Session: {{ thread.session.name }}</p>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Sender</th>
+                <th>Receiver</th>
+                <th>Message</th>
+                <th>Attachment</th>
+                <th>Status</th>
+                <th>Sent</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.sender.username }}</td>
+                    <td>{{ row.receiver.username }}</td>
+                    <td>
+                        {{ row.message_text|linebreaksbr }}
+                        {% if row.edited_at %}<br><small>Edited: {{ row.edited_at }}</small>{% endif %}
+                    </td>
+                    <td>{% if row.attachment %}<a href="{{ row.attachment.url }}">Download</a>{% else %}-{% endif %}</td>
+                    <td>{% if row.is_read %}Read{% else %}Unread{% endif %}</td>
+                    <td>{{ row.sent_at }}</td>
+                    <td>
+                        {% if request.user.id == row.sender_id and not row.is_read %}
+                            <a href="{% url 'communication_message_edit_core' row.id %}">Edit</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7">No messages yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h4>Reply</h4>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reply">
+        {{ reply_form.as_p }}
+        <button type="submit">Send Reply</button>
+        <a href="{% url 'communication_thread_list_core' %}">Back to Threads</a>
+    </form>
+</div>
+{% endblock %}

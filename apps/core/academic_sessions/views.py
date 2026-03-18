@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -7,7 +9,7 @@ from apps.core.users.decorators import role_required
 
 from .forms import AcademicSessionForm
 from .models import AcademicSession
-from .services import activate_session
+from .services import activate_session, ensure_session_editable
 
 
 @login_required
@@ -55,16 +57,25 @@ def session_update(request, pk):
         school=school
     )
 
+    if session.is_locked:
+        messages.error(request, 'Locked academic sessions cannot be edited.')
+        return redirect('session_list')
+
     if request.method == 'POST':
         form = AcademicSessionForm(request.POST, instance=session)
         if form.is_valid():
-            session = form.save(commit=False)
-            should_activate = session.is_active
+            updated_session = form.save(commit=False)
+            should_activate = updated_session.is_active
             if should_activate:
-                session.is_active = False
-            session.save()
-            if should_activate:
-                activate_session(school=school, session=session)
+                updated_session.is_active = False
+            try:
+                ensure_session_editable(session=session)
+                updated_session.save()
+                if should_activate:
+                    activate_session(school=school, session=updated_session)
+            except ValidationError as exc:
+                messages.error(request, '; '.join(exc.messages))
+                return redirect('session_list')
             return redirect('session_list')
     else:
         form = AcademicSessionForm(instance=session)
@@ -83,6 +94,23 @@ def session_delete(request, pk):
         pk=pk,
         school=request.user.school
     )
+    if session.is_locked:
+        messages.error(request, 'Locked academic sessions cannot be deleted.')
+        return redirect('session_list')
+
+    related_data_exists = any([
+        session.classes.exists(),
+        session.students_core.exists(),
+        session.exams.exists(),
+        session.student_fees_core.exists(),
+        session.payrolls.exists(),
+        session.student_attendances.exists(),
+        session.staff_attendances.exists(),
+    ])
+    if related_data_exists:
+        messages.error(request, 'This session already has data and cannot be deleted.')
+        return redirect('session_list')
+
     session.delete()
     return redirect('session_list')
 
@@ -97,8 +125,11 @@ def session_activate(request, pk):
         pk=pk,
         school=school
     )
-
-    activate_session(school=school, session=session)
+    try:
+        activate_session(school=school, session=session)
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+        return redirect('session_list')
 
     log_audit_event(
         request=request,

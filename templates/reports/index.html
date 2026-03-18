@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Advanced Reports & Analytics</h2>
+
+{% for category, rows in report_groups.items %}
+    <div class="card">
+        <h3>{{ category }}</h3>
+        <table>
+            <thead>
+                <tr><th>Report</th><th>Open</th></tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ row.title }}</td>
+                        <td><a href="{% url 'report_detail' row.slug %}">Open report</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endfor %}
+{% endblock %}

@@ -12,6 +12,11 @@ from .views import (
     hr_leave_request_create,
     hr_leave_request_list,
     hr_leave_request_review,
+    hr_payroll_list,
+    hr_payroll_unlock,
+    hr_payslip_bulk_download,
+    hr_payslip_download,
+    hr_salary_advance_list,
     hr_salary_structure_list,
     hr_staff_attendance_edit,
     hr_staff_attendance_list,
@@ -65,4 +70,9 @@ urlpatterns = [
     path('substitutions/<int:pk>/deactivate/', hr_substitution_deactivate, name='hr_substitution_deactivate'),
 
     path('salary/', hr_salary_structure_list, name='hr_salary_structure_list'),
+    path('salary/advances/', hr_salary_advance_list, name='hr_salary_advance_list'),
+    path('salary/payroll/', hr_payroll_list, name='hr_payroll_list'),
+    path('salary/payroll/<int:pk>/unlock/', hr_payroll_unlock, name='hr_payroll_unlock'),
+    path('salary/payslip/<int:payroll_id>/', hr_payslip_download, name='hr_payslip_download'),
+    path('salary/payslip-bulk/', hr_payslip_bulk_download, name='hr_payslip_bulk_download'),
 ]

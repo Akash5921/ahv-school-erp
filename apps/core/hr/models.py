@@ -3,12 +3,18 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import F, Q
+from django.utils import timezone
 
 from apps.core.academic_sessions.models import AcademicSession
 from apps.core.academics.models import ClassSubject, Period, SchoolClass, Section, Subject
 from apps.core.schools.models import School
 from apps.core.utils.managers import SchoolManager
+
+
+def _ensure_session_editable(session, message='This academic session is locked.'):
+    if session and session.is_locked:
+        raise ValidationError(message)
 
 
 class Designation(models.Model):
@@ -178,6 +184,8 @@ class TeacherSubjectAssignment(models.Model):
 
         if self.school_id and self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.teacher_id and self.teacher.school_id != self.school_id:
             raise ValidationError({'teacher': 'Teacher must belong to selected school.'})
@@ -201,6 +209,7 @@ class TeacherSubjectAssignment(models.Model):
                 raise ValidationError({'subject': 'Subject is not mapped with selected class.'})
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -261,6 +270,8 @@ class ClassTeacher(models.Model):
 
         if self.school_id and self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.teacher_id and self.teacher.school_id != self.school_id:
             raise ValidationError({'teacher': 'Teacher must belong to selected school.'})
@@ -289,6 +300,7 @@ class ClassTeacher(models.Model):
             super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -363,6 +375,7 @@ class StaffAttendance(models.Model):
         if self.session_id:
             if self.session.school_id != self.school_id:
                 raise ValidationError({'session': 'Session must belong to selected school.'})
+            _ensure_session_editable(self.session)
             if self.date and (self.date < self.session.start_date or self.date > self.session.end_date):
                 raise ValidationError({'date': 'Attendance date must be within selected session range.'})
 
@@ -534,6 +547,8 @@ class Substitution(models.Model):
 
         if self.session_id and self.session.school_id != self.school_id:
             raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
 
         if self.school_class_id:
             if self.school_class.school_id != self.school_id:
@@ -560,6 +575,7 @@ class Substitution(models.Model):
                 raise ValidationError({'period': 'Period must belong to selected session.'})
 
     def delete(self, *args, **kwargs):
+        _ensure_session_editable(self.session)
         if self.is_active:
             self.is_active = False
             self.save(update_fields=['is_active'])
@@ -580,8 +596,14 @@ class SalaryStructure(models.Model):
         related_name='salary_structures',
     )
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
-    allowances = models.JSONField(default=dict, blank=True)
-    deductions = models.JSONField(default=dict, blank=True)
+    hra = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    da = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    transport_allowance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    other_allowances = models.JSONField(default=dict, blank=True)
+    pf_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    esi_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    professional_tax = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    other_deductions = models.JSONField(default=dict, blank=True)
     effective_from = models.DateField()
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -609,17 +631,57 @@ class SalaryStructure(models.Model):
         if self.basic_salary <= 0:
             raise ValidationError({'basic_salary': 'Basic salary must be greater than zero.'})
 
-        if not isinstance(self.allowances, dict):
-            raise ValidationError({'allowances': 'Allowances must be a JSON object.'})
+        non_negative_fields = [
+            ('hra', self.hra),
+            ('da', self.da),
+            ('transport_allowance', self.transport_allowance),
+            ('pf_deduction', self.pf_deduction),
+            ('esi_deduction', self.esi_deduction),
+            ('professional_tax', self.professional_tax),
+        ]
+        for field_name, value in non_negative_fields:
+            if value < 0:
+                raise ValidationError({field_name: 'Value cannot be negative.'})
 
-        if not isinstance(self.deductions, dict):
-            raise ValidationError({'deductions': 'Deductions must be a JSON object.'})
+        if not isinstance(self.other_allowances, dict):
+            raise ValidationError({'other_allowances': 'Other allowances must be a JSON object.'})
+
+        if not isinstance(self.other_deductions, dict):
+            raise ValidationError({'other_deductions': 'Other deductions must be a JSON object.'})
+
+        if self.pk:
+            previous = SalaryStructure.objects.filter(pk=self.pk).first()
+            if previous:
+                immutable_fields = [
+                    'school_id',
+                    'staff_id',
+                    'basic_salary',
+                    'hra',
+                    'da',
+                    'transport_allowance',
+                    'other_allowances',
+                    'pf_deduction',
+                    'esi_deduction',
+                    'professional_tax',
+                    'other_deductions',
+                    'effective_from',
+                ]
+                if any(getattr(previous, field) != getattr(self, field) for field in immutable_fields):
+                    raise ValidationError('Salary structure records are immutable. Create a new effective record.')
+
+    @property
+    def allowance_total(self):
+        other_allowance_sum = sum(Decimal(str(v)) for v in self.other_allowances.values())
+        return self.basic_salary + self.hra + self.da + self.transport_allowance + other_allowance_sum
+
+    @property
+    def deduction_total(self):
+        other_deduction_sum = sum(Decimal(str(v)) for v in self.other_deductions.values())
+        return self.pf_deduction + self.esi_deduction + self.professional_tax + other_deduction_sum
 
     @property
     def net_salary(self):
-        allowance_total = sum(Decimal(str(v)) for v in self.allowances.values())
-        deduction_total = sum(Decimal(str(v)) for v in self.deductions.values())
-        return self.basic_salary + allowance_total - deduction_total
+        return self.allowance_total - self.deduction_total
 
     def __str__(self):
         return f"{self.staff.employee_id} - {self.basic_salary}"
@@ -662,3 +724,288 @@ class SalaryHistory(models.Model):
 
     def __str__(self):
         return f"{self.staff.employee_id}: {self.old_salary} -> {self.new_salary}"
+
+
+class SalaryAdvance(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_ADJUSTED = 'adjusted'
+    STATUS_CHOICES = (
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_REJECTED, 'Rejected'),
+        (STATUS_ADJUSTED, 'Adjusted'),
+    )
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name='salary_advances',
+    )
+    session = models.ForeignKey(
+        AcademicSession,
+        on_delete=models.CASCADE,
+        related_name='salary_advances',
+    )
+    staff = models.ForeignKey(
+        Staff,
+        on_delete=models.CASCADE,
+        related_name='salary_advances',
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    request_date = models.DateField(default=timezone.localdate)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_salary_advances',
+    )
+    remaining_balance = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-request_date', '-id']
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(amount__gt=0),
+                name='salary_advance_amount_gt_zero',
+            ),
+            models.CheckConstraint(
+                condition=Q(remaining_balance__gte=0),
+                name='salary_advance_remaining_non_negative',
+            ),
+            models.CheckConstraint(
+                condition=Q(remaining_balance__lte=F('amount')),
+                name='salary_advance_remaining_not_above_amount',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['school', 'session', 'staff', 'status'], name='core_hr_saladv_scope_idx'),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if self.staff_id and self.staff.school_id != self.school_id:
+            raise ValidationError({'staff': 'Staff must belong to selected school.'})
+
+        if self.session_id and self.session.school_id != self.school_id:
+            raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
+
+        if self.amount <= 0:
+            raise ValidationError({'amount': 'Advance amount must be greater than zero.'})
+
+        if self.remaining_balance < 0:
+            raise ValidationError({'remaining_balance': 'Remaining balance cannot be negative.'})
+
+        if self.remaining_balance > self.amount:
+            raise ValidationError({'remaining_balance': 'Remaining balance cannot exceed amount.'})
+
+        if self.status in {self.STATUS_APPROVED, self.STATUS_REJECTED, self.STATUS_ADJUSTED} and not self.approved_by_id:
+            raise ValidationError({'approved_by': 'Approver is required for this status.'})
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Salary advance records cannot be deleted.')
+
+    def __str__(self):
+        return f"{self.staff.employee_id} - {self.amount} ({self.status})"
+
+
+class Payroll(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name='payrolls',
+    )
+    session = models.ForeignKey(
+        AcademicSession,
+        on_delete=models.CASCADE,
+        related_name='payrolls',
+    )
+    staff = models.ForeignKey(
+        Staff,
+        on_delete=models.CASCADE,
+        related_name='payrolls',
+    )
+    month = models.PositiveSmallIntegerField()
+    year = models.PositiveIntegerField()
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    attendance_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    leave_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    advance_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    total_deductions = models.DecimalField(max_digits=12, decimal_places=2)
+    net_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    total_working_days = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    present_days = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    absent_days = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    processed_on = models.DateTimeField(auto_now_add=True)
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='processed_payrolls',
+    )
+    is_locked = models.BooleanField(default=False)
+    is_paid = models.BooleanField(default=False)
+    paid_on = models.DateTimeField(null=True, blank=True)
+    paid_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='paid_payrolls',
+    )
+    is_on_hold = models.BooleanField(default=False)
+    hold_reason = models.CharField(max_length=255, blank=True)
+    attendance_snapshot = models.JSONField(default=dict, blank=True)
+    salary_snapshot = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-year', '-month', 'staff__employee_id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['staff', 'month', 'year'],
+                name='unique_payroll_per_staff_month_year',
+            ),
+            models.CheckConstraint(
+                condition=Q(month__gte=1) & Q(month__lte=12),
+                name='payroll_month_range',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['school', 'session', 'year', 'month'], name='core_hr_payroll_period_idx'),
+            models.Index(fields=['school', 'is_locked', 'is_paid'], name='core_hr_payroll_lock_paid_idx'),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if self.staff_id and self.staff.school_id != self.school_id:
+            raise ValidationError({'staff': 'Staff must belong to selected school.'})
+
+        if self.session_id and self.session.school_id != self.school_id:
+            raise ValidationError({'session': 'Session must belong to selected school.'})
+        if self.session_id:
+            _ensure_session_editable(self.session)
+
+        non_negative_fields = [
+            ('gross_salary', self.gross_salary),
+            ('attendance_deduction', self.attendance_deduction),
+            ('leave_deduction', self.leave_deduction),
+            ('advance_deduction', self.advance_deduction),
+            ('total_deductions', self.total_deductions),
+            ('net_salary', self.net_salary),
+            ('total_working_days', self.total_working_days),
+            ('present_days', self.present_days),
+            ('absent_days', self.absent_days),
+        ]
+        for field_name, value in non_negative_fields:
+            if value < 0:
+                raise ValidationError({field_name: 'Value cannot be negative.'})
+
+        if self.present_days > self.total_working_days:
+            raise ValidationError({'present_days': 'Present days cannot exceed total working days.'})
+
+        if self.absent_days > self.total_working_days:
+            raise ValidationError({'absent_days': 'Absent days cannot exceed total working days.'})
+
+        if self.total_deductions > self.gross_salary:
+            raise ValidationError({'total_deductions': 'Total deductions cannot exceed gross salary.'})
+
+        if self.is_paid and self.is_on_hold:
+            raise ValidationError({'is_paid': 'Payroll on hold cannot be marked paid.'})
+
+        if self.is_paid and not self.paid_on:
+            raise ValidationError({'paid_on': 'Payment timestamp is required when marked paid.'})
+
+        if self.is_on_hold and not self.hold_reason.strip():
+            raise ValidationError({'hold_reason': 'Hold reason is required when payroll is on hold.'})
+
+        if self.pk:
+            previous = Payroll.objects.filter(pk=self.pk).first()
+            if previous and previous.is_locked:
+                protected_fields = [
+                    'school_id',
+                    'session_id',
+                    'staff_id',
+                    'month',
+                    'year',
+                    'gross_salary',
+                    'attendance_deduction',
+                    'leave_deduction',
+                    'advance_deduction',
+                    'total_deductions',
+                    'net_salary',
+                    'total_working_days',
+                    'present_days',
+                    'absent_days',
+                    'attendance_snapshot',
+                    'salary_snapshot',
+                ]
+                if any(getattr(previous, field) != getattr(self, field) for field in protected_fields):
+                    raise ValidationError('Locked payroll cannot be edited.')
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Payroll records cannot be deleted.')
+
+    def __str__(self):
+        return f"{self.staff.employee_id} - {self.month:02d}/{self.year}"
+
+
+class PayrollAdvanceAdjustment(models.Model):
+    payroll = models.ForeignKey(
+        Payroll,
+        on_delete=models.CASCADE,
+        related_name='advance_adjustments',
+    )
+    salary_advance = models.ForeignKey(
+        SalaryAdvance,
+        on_delete=models.PROTECT,
+        related_name='payroll_adjustments',
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['payroll', 'salary_advance'],
+                name='unique_payroll_advance_adjustment',
+            ),
+            models.CheckConstraint(
+                condition=Q(amount__gt=0),
+                name='payroll_advance_adjustment_amount_gt_zero',
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.payroll_id:
+            _ensure_session_editable(self.payroll.session)
+
+        if self.amount <= 0:
+            raise ValidationError({'amount': 'Adjustment amount must be greater than zero.'})
+
+        if self.salary_advance_id and self.payroll_id:
+            if self.salary_advance.school_id != self.payroll.school_id:
+                raise ValidationError({'salary_advance': 'Advance school mismatch with payroll.'})
+            if self.salary_advance.staff_id != self.payroll.staff_id:
+                raise ValidationError({'salary_advance': 'Advance staff mismatch with payroll.'})
+            if self.salary_advance.session_id != self.payroll.session_id:
+                raise ValidationError({'salary_advance': 'Advance session mismatch with payroll.'})
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Payroll advance adjustment records cannot be deleted.')
+
+    def __str__(self):
+        return f"Payroll {self.payroll_id} - Advance {self.salary_advance_id}"

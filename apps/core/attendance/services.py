@@ -52,7 +52,7 @@ def _resolve_session(school, session=None):
 
 
 def _ensure_session_editable(session, allow_override=False):
-    if session.attendance_locked and not allow_override:
+    if (session.attendance_locked or session.is_locked) and not allow_override:
         raise ValidationError('Attendance is locked for this session.')
 
 

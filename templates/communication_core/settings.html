@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Communication Channel Settings</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Settings</button>
+    </form>
+</div>
+{% endblock %}

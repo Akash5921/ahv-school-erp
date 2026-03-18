@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>SMS Usage Report</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Recipient</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Error</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.recipient_number }}</td>
+                    <td>{{ row.message|truncatechars:80 }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ row.error_message|default:'-' }}</td>
+                    <td>{{ row.timestamp }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No SMS records.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

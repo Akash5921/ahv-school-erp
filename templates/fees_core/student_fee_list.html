@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Student Fee Assignment</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+
+    <form method="get">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for s in sessions %}
+                <option value="{{ s.id }}" {% if selected_session and selected_session.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <hr>
+    <h4>Bulk Sync</h4>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="sync_scope">
+        {{ sync_form.as_p }}
+        <button type="submit">Sync Fee Assignments</button>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Session</th>
+                <th>Class</th>
+                <th>Fee Type</th>
+                <th>Total</th>
+                <th>Concession</th>
+                <th>Final</th>
+                <th>Carry</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in fees %}
+                <tr>
+                    <td>{{ row.student.admission_number }} - {{ row.student.full_name }}</td>
+                    <td>{{ row.session.name }}</td>
+                    <td>{{ row.assigned_class.name|default:'-' }}</td>
+                    <td>{{ row.fee_type.name }}</td>
+                    <td>{{ row.total_amount }}</td>
+                    <td>{{ row.concession_amount }}</td>
+                    <td>{{ row.final_amount }}</td>
+                    <td>{% if row.is_carry_forward %}Yes{% else %}No{% endif %}</td>
+                    <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <form method="post" action="{% url 'student_fee_sync_single_core' row.student_id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">Sync Student</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="10">No student fee records found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

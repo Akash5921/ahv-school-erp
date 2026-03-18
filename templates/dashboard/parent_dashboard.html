@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Parent Dashboard</h2>
+
+<div class="card">
+    <p><strong>Unread Notifications:</strong> {{ unread_notifications }} | <strong>Unread Messages:</strong> {{ unread_messages }}</p>
+    <p><strong>Average Attendance:</strong> {{ average_attendance }}% | <strong>Total Due:</strong> {{ total_due }}</p>
+    <p>
+        <a href="{% url 'communication_parent_portal_core' %}">Open parent portal</a> |
+        <a href="{% url 'communication_thread_list_core' %}">Message teachers</a>
+    </p>
+</div>
+
+<div class="card">
+    <h3>Children Overview</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Attendance %</th>
+                <th>Upcoming Exams</th>
+                <th>Fee Due</th>
+                <th>Latest Result</th>
+                <th>Receipts</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in child_rows %}
+                <tr>
+                    <td>
+                        {{ row.student.full_name }}
+                        {% if row.is_primary %}<br><span class="meta">Primary profile</span>{% endif %}
+                    </td>
+                    <td>{{ row.attendance_summary.attendance_percentage|default:"-" }}</td>
+                    <td>
+                        {% for exam in row.upcoming_exams %}
+                            {{ exam.exam_type.name }} on {{ exam.start_date }}<br>
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                    <td>{{ row.fee_summary.total_due }}</td>
+                    <td>
+                        {% if row.latest_result %}
+                            {{ row.latest_result.exam.exam_type.name }}: {{ row.latest_result.percentage }}%
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ row.receipt_count }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6">No linked students found for this parent account.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Recent Announcements</h3>
+    <ul>
+        {% for row in recent_announcements %}
+            <li><strong>{{ row.title }}</strong> - {{ row.created_at }}</li>
+        {% empty %}
+            <li>No announcements available.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

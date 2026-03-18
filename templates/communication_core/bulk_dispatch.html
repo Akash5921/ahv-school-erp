@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Bulk Email Dispatch</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="email">
+        {{ email_form.as_p }}
+        <button type="submit">Send Email</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Bulk SMS Dispatch</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="sms">
+        {{ sms_form.as_p }}
+        <button type="submit">Send SMS</button>
+    </form>
+</div>
+
+<div class="card">
+    <h4>Recent Email Logs</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in recent_email_logs %}
+                <tr>
+                    <td>{{ row.recipient }}</td>
+                    <td>{{ row.subject }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ row.timestamp }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No email logs.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h4>Recent SMS Logs</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Recipient</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in recent_sms_logs %}
+                <tr>
+                    <td>{{ row.recipient_number }}</td>
+                    <td>{{ row.message|truncatechars:50 }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ row.timestamp }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No SMS logs.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

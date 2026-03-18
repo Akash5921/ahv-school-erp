@@ -40,6 +40,11 @@ def _sum_amount(queryset, field_name='amount') -> Decimal:
     return _to_decimal(value)
 
 
+def _ensure_session_editable(session):
+    if session.is_locked:
+        raise ValidationError('This academic session is locked.')
+
+
 def _carry_forward_fee_type(school):
     fee_type, _ = FeeType.objects.get_or_create(
         school=school,
@@ -57,6 +62,7 @@ def _carry_forward_fee_type(school):
 
 @transaction.atomic
 def recalculate_student_fee_concessions(*, student: Student, session: AcademicSession):
+    _ensure_session_editable(session)
     fees = list(
         StudentFee.objects.filter(
             school=student.school,
@@ -138,6 +144,7 @@ def recalculate_student_fee_concessions(*, student: Student, session: AcademicSe
 def sync_student_fees_for_student(*, student: Student, previous_session: AcademicSession | None = None):
     if not (student.school_id and student.session_id):
         return []
+    _ensure_session_editable(student.session)
 
     if not student.current_class_id:
         StudentFee.objects.filter(
@@ -355,6 +362,7 @@ def collect_fee_payment(
 
     if session.school_id != school.id:
         raise ValidationError('Session does not belong to selected school.')
+    _ensure_session_editable(session)
     if student.school_id != school.id or student.session_id != session.id:
         raise ValidationError('Student does not belong to selected school-session.')
     if installment.school_id != school.id or installment.session_id != session.id:
@@ -447,6 +455,7 @@ def collect_fee_payment(
 
 @transaction.atomic
 def reverse_fee_payment(*, payment: FeePayment, reversed_by, reason: str):
+    _ensure_session_editable(payment.session)
     if payment.is_reversed:
         raise ValidationError('Payment is already reversed.')
 
@@ -498,6 +507,7 @@ def reverse_fee_payment(*, payment: FeePayment, reversed_by, reason: str):
 
 @transaction.atomic
 def create_fee_refund(*, payment: FeePayment, refund_amount, reason, approved_by, refund_date=None):
+    _ensure_session_editable(payment.session)
     if payment.is_reversed:
         raise ValidationError('Cannot refund a reversed payment.')
 
@@ -552,6 +562,7 @@ def create_fee_refund(*, payment: FeePayment, refund_amount, reason, approved_by
 
 @transaction.atomic
 def reverse_fee_refund(*, refund: FeeRefund, reversed_by, reason: str):
+    _ensure_session_editable(refund.session)
     if refund.is_reversed:
         raise ValidationError('Refund is already reversed.')
 
@@ -599,6 +610,7 @@ def reverse_fee_refund(*, refund: FeeRefund, reversed_by, reason: str):
 def generate_carry_forward_due(*, student: Student, from_session: AcademicSession, to_session: AcademicSession):
     if student.school_id != from_session.school_id or student.school_id != to_session.school_id:
         raise ValidationError('Carry forward sessions must belong to student school.')
+    _ensure_session_editable(to_session)
 
     if from_session.id == to_session.id:
         raise ValidationError('From session and to session must be different.')

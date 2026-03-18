@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Notifications</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <p>Unread: {{ unread_count }}</p>
+
+    <form method="get" style="margin-bottom:12px;">
+        {{ form.as_p }}
+        <button type="submit">Apply</button>
+    </form>
+
+    <form method="post" action="{% url 'communication_notification_mark_all_read_core' %}" style="margin-bottom:12px;">
+        {% csrf_token %}
+        <button type="submit">Mark All Read</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Message</th>
+                <th>Created</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.title }}</td>
+                    <td>{{ row.message }}</td>
+                    <td>{{ row.created_at }}</td>
+                    <td>{% if row.is_read %}Read{% else %}Unread{% endif %}</td>
+                    <td>
+                        {% if not row.is_read %}
+                            <form method="post" action="{% url 'communication_notification_mark_read_core' row.id %}">
+                                {% csrf_token %}
+                                <button type="submit">Mark Read</button>
+                            </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No notifications.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

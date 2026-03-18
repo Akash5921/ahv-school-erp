@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Book Issue/Return</h2>
+    <form method="get" style="margin-bottom:10px;">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <h3>Issue Book</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="issue">
+        {{ issue_form.as_p }}
+        <button type="submit">Issue</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Issue Register</h3>
+    <table>
+        <tr>
+            <th>Book</th>
+            <th>Recipient</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Return Date</th>
+            <th>Fine</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.book.title }}</td>
+            <td>{{ row.issued_to_display }}</td>
+            <td>{{ row.issue_date }}</td>
+            <td>{{ row.due_date }}</td>
+            <td>{{ row.return_date|default:"-" }}</td>
+            <td>{{ row.fine_amount }}</td>
+            <td>{{ row.is_active|yesno:"Issued,Returned" }}</td>
+            <td>
+                {% if row.is_active %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="return">
+                    <input type="hidden" name="issue_id" value="{{ row.id }}">
+                    {{ return_form.as_p }}
+                    <button type="submit">Return</button>
+                </form>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">No issue records available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

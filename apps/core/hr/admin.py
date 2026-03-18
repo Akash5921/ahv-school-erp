@@ -4,7 +4,10 @@ from .models import (
     ClassTeacher,
     Designation,
     LeaveRequest,
+    Payroll,
+    PayrollAdvanceAdjustment,
     SalaryHistory,
+    SalaryAdvance,
     SalaryStructure,
     Staff,
     StaffAttendance,
@@ -83,3 +86,34 @@ class SalaryHistoryAdmin(admin.ModelAdmin):
     list_display = ('staff', 'old_salary', 'new_salary', 'changed_on', 'changed_by')
     list_filter = ('school', 'changed_on')
     search_fields = ('staff__employee_id',)
+
+
+@admin.register(SalaryAdvance)
+class SalaryAdvanceAdmin(admin.ModelAdmin):
+    list_display = ('staff', 'session', 'amount', 'remaining_balance', 'status', 'request_date')
+    list_filter = ('school', 'session', 'status')
+    search_fields = ('staff__employee_id', 'staff__user__username')
+
+
+@admin.register(Payroll)
+class PayrollAdmin(admin.ModelAdmin):
+    list_display = (
+        'staff',
+        'session',
+        'month',
+        'year',
+        'gross_salary',
+        'total_deductions',
+        'net_salary',
+        'is_paid',
+        'is_locked',
+        'is_on_hold',
+    )
+    list_filter = ('school', 'session', 'year', 'month', 'is_paid', 'is_locked', 'is_on_hold')
+    search_fields = ('staff__employee_id', 'staff__user__username')
+
+
+@admin.register(PayrollAdvanceAdjustment)
+class PayrollAdvanceAdjustmentAdmin(admin.ModelAdmin):
+    list_display = ('payroll', 'salary_advance', 'amount', 'created_at')
+    list_filter = ('payroll__school', 'payroll__session')

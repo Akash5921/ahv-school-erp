@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Dues Report</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+
+    <form method="get">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">Select Session</option>
+            {% for s in sessions %}
+                <option value="{{ s.id }}" {% if selected_session and selected_session.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Principal Due</th>
+                <th>Fine Due</th>
+                <th>Total Due</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.student.admission_number }} - {{ row.student.full_name }}</td>
+                    <td>{{ row.principal_due }}</td>
+                    <td>{{ row.fine_due }}</td>
+                    <td>{{ row.total_due }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No dues found for selected session.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

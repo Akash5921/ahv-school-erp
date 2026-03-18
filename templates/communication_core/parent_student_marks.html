@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Marks: {{ student.admission_number }} - {{ student.full_name }}</h3>
+    <form method="get">
+        <label>Exam Summary</label>
+        <select name="summary">
+            {% for row in summaries %}
+                <option value="{{ row.id }}" {% if selected_summary and selected_summary.id == row.id %}selected{% endif %}>
+                    {{ row.exam.exam_type.name }} - {{ row.exam.start_date }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Load</button>
+        <a href="{% url 'communication_parent_portal_core' %}">Back</a>
+    </form>
+</div>
+
+{% if selected_summary %}
+<div class="card">
+    <p>Total Marks: {{ selected_summary.total_marks }}</p>
+    <p>Percentage: {{ selected_summary.percentage }}</p>
+    <p>Grade: {{ selected_summary.grade|default:'-' }}</p>
+    <p>Rank: {{ selected_summary.rank|default:'-' }}</p>
+</div>
+{% endif %}
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Marks</th>
+                <th>Grade</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in marks %}
+                <tr>
+                    <td>{{ row.subject.name }}</td>
+                    <td>{{ row.marks_obtained }}</td>
+                    <td>{{ row.grade|default:'-' }}</td>
+                    <td>{{ row.remarks|default:'-' }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No marks available.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

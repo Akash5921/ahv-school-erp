@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Library Book Master</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Book</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Books</h3>
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>ISBN</th>
+            <th>Category</th>
+            <th>Total</th>
+            <th>Available</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.title }}</td>
+            <td>{{ row.author|default:"-" }}</td>
+            <td>{{ row.isbn|default:"-" }}</td>
+            <td>{{ row.category|default:"-" }}</td>
+            <td>{{ row.total_copies }}</td>
+            <td>{{ row.available_copies }}</td>
+            <td>{{ row.is_active|yesno:"Active,Inactive" }}</td>
+            <td>
+                <a href="{% url 'inventory_book_update_core' row.id %}">Edit</a>
+                <form method="post" action="{% url 'inventory_book_deactivate_core' row.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Deactivate</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">No books available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

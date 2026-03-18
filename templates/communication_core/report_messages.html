@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Message History Report</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Thread</th>
+                <th>Sender</th>
+                <th>Receiver</th>
+                <th>Read</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.thread.subject }}</td>
+                    <td>{{ row.sender.username }}</td>
+                    <td>{{ row.receiver.username }}</td>
+                    <td>{{ row.is_read|yesno:'Yes,No' }}</td>
+                    <td>{{ row.sent_at }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No message records.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

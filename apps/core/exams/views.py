@@ -122,15 +122,19 @@ def exam_type_update(request, pk):
 @require_POST
 def exam_type_deactivate(request, pk):
     exam_type = get_object_or_404(ExamType, pk=pk, school=request.user.school)
-    exam_type.delete()
-    log_audit_event(
-        request=request,
-        action='exams.exam_type_deactivated',
-        school=request.user.school,
-        target=exam_type,
-        details=f"Name={exam_type.name}",
-    )
-    messages.success(request, 'Exam type deactivated.')
+    try:
+        exam_type.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='exams.exam_type_deactivated',
+            school=request.user.school,
+            target=exam_type,
+            details=f"Name={exam_type.name}",
+        )
+        messages.success(request, 'Exam type deactivated.')
     return redirect('exam_type_list')
 
 
@@ -422,15 +426,19 @@ def grade_scale_update(request, pk):
 @require_POST
 def grade_scale_deactivate(request, pk):
     grade = get_object_or_404(GradeScale, pk=pk, school=request.user.school)
-    grade.delete()
-    log_audit_event(
-        request=request,
-        action='exams.grade_scale_deactivated',
-        school=request.user.school,
-        target=grade,
-        details=f"Grade={grade.grade_name}",
-    )
-    messages.success(request, 'Grade scale deactivated.')
+    try:
+        grade.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='exams.grade_scale_deactivated',
+            school=request.user.school,
+            target=grade,
+            details=f"Grade={grade.grade_name}",
+        )
+        messages.success(request, 'Grade scale deactivated.')
     return redirect('grade_scale_list_core')
 
 

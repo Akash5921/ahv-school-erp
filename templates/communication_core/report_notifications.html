@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Notification Engagement Report</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Title</th>
+                <th>Read</th>
+                <th>Created</th>
+                <th>Read At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.user.username }}</td>
+                    <td>{{ row.title }}</td>
+                    <td>{{ row.is_read|yesno:'Yes,No' }}</td>
+                    <td>{{ row.created_at }}</td>
+                    <td>{{ row.read_at|default:'-' }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No notification records.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

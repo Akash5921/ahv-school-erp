@@ -27,6 +27,11 @@ def _active_exam_subjects(exam: Exam):
     )
 
 
+def _ensure_exam_session_editable(*, exam: Exam, allow_override=False):
+    if exam.session.is_locked and not allow_override:
+        raise ValidationError('This academic session is locked.')
+
+
 def eligible_students_for_exam(exam: Exam):
     records = StudentSessionRecord.objects.filter(
         school=exam.school,
@@ -97,6 +102,7 @@ def upsert_student_mark(
     remarks='',
     allow_override=False,
 ):
+    _ensure_exam_session_editable(exam=exam, allow_override=allow_override)
     if exam.is_locked and not allow_override:
         raise ValidationError('Exam is locked. Marks entry is not allowed.')
 
@@ -180,6 +186,7 @@ def upsert_student_mark(
 
 @transaction.atomic
 def calculate_student_result(*, exam: Exam, student: Student, allow_override=False):
+    _ensure_exam_session_editable(exam=exam, allow_override=allow_override)
     exam_subjects = _active_exam_subjects(exam)
     if not exam_subjects:
         raise ValidationError('Cannot calculate result without active exam subjects.')
@@ -269,13 +276,15 @@ def recalculate_exam_ranks(*, exam: Exam, allow_override=False):
 
     current_rank = 0
     prev_key = None
-    for index, summary in enumerate(summaries, start=1):
+    rank_index = 0
+    for summary in summaries:
         if summary.is_locked and not allow_override:
             continue
 
+        rank_index += 1
         key = (summary.percentage, summary.total_marks)
         if key != prev_key:
-            current_rank = index
+            current_rank = rank_index
             prev_key = key
 
         if summary.rank != current_rank:
@@ -287,6 +296,7 @@ def recalculate_exam_ranks(*, exam: Exam, allow_override=False):
 
 @transaction.atomic
 def generate_exam_results(*, exam: Exam, allow_override=False):
+    _ensure_exam_session_editable(exam=exam, allow_override=allow_override)
     if exam.is_locked and not allow_override:
         raise ValidationError('Exam results are locked.')
 
@@ -311,6 +321,7 @@ def generate_exam_results(*, exam: Exam, allow_override=False):
 
 @transaction.atomic
 def lock_exam_results(*, exam: Exam):
+    _ensure_exam_session_editable(exam=exam)
     exam.is_locked = True
     exam.save(update_fields=['is_locked', 'updated_at'])
     marks_locked = StudentMark.objects.filter(exam=exam).update(is_locked=True)

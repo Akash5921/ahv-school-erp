@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Payroll Processing</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="card">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <form method="get">
+        <label>Session</label>
+        <select name="session">
+            <option value="">All</option>
+            {% for row in sessions %}
+                <option value="{{ row.id }}" {% if selected_session and selected_session.id == row.id %}selected{% endif %}>{{ row.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Month</label>
+        <select name="month">
+            {% for value, label in month_choices %}
+                <option value="{{ value }}" {% if selected_month == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Year</label>
+        <select name="year">
+            {% for value in year_choices %}
+                <option value="{{ value }}" {% if selected_year == value %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Process Payroll</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="process">
+        {{ process_form.as_p }}
+        <button type="submit">Process Selected Staff</button>
+    </form>
+
+    <hr>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="process_all">
+        <input type="hidden" name="session" value="{{ selected_session.id|default:'' }}">
+        <input type="hidden" name="month" value="{{ selected_month }}">
+        <input type="hidden" name="year" value="{{ selected_year }}">
+        <button type="submit">Process All Active Staff</button>
+    </form>
+
+    <p>
+        <a href="{% url 'hr_payslip_bulk_download' %}?session={{ selected_session.id|default:'' }}&month={{ selected_month }}&year={{ selected_year }}">Download Bulk Payslips</a>
+    </p>
+</div>
+
+<div class="card">
+    <h3>Payroll Rows</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Staff</th>
+                <th>Month/Year</th>
+                <th>Gross</th>
+                <th>Deductions</th>
+                <th>Net</th>
+                <th>Paid</th>
+                <th>Hold</th>
+                <th>Locked</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in payroll_rows %}
+                <tr>
+                    <td>{{ row.staff.employee_id }} - {{ row.staff.full_name }}</td>
+                    <td>{{ row.month|stringformat:"02d" }}/{{ row.year }}</td>
+                    <td>{{ row.gross_salary }}</td>
+                    <td>{{ row.total_deductions }}</td>
+                    <td>{{ row.net_salary }}</td>
+                    <td>{% if row.is_paid %}Yes{% else %}No{% endif %}</td>
+                    <td>{% if row.is_on_hold %}Yes{% else %}No{% endif %}</td>
+                    <td>{% if row.is_locked %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'hr_payslip_download' row.id %}">Payslip</a>
+
+                        {% if not row.is_paid and not row.is_on_hold %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="mark_paid">
+                                <input type="hidden" name="payroll_id" value="{{ row.id }}">
+                                <button type="submit">Mark Paid</button>
+                            </form>
+                        {% endif %}
+
+                        {% if not row.is_locked %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="lock">
+                                <input type="hidden" name="payroll_id" value="{{ row.id }}">
+                                <button type="submit">Lock</button>
+                            </form>
+                        {% endif %}
+
+                        {% if not row.is_on_hold %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="hold">
+                                <input type="hidden" name="payroll_id" value="{{ row.id }}">
+                                <input type="text" name="reason" placeholder="Hold reason" required>
+                                <button type="submit">Hold</button>
+                            </form>
+                        {% else %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="release_hold">
+                                <input type="hidden" name="payroll_id" value="{{ row.id }}">
+                                <button type="submit">Release Hold</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9">No payroll rows for selected filter.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

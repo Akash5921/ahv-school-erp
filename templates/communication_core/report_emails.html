@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Email Delivery Report</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Error</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.recipient }}</td>
+                    <td>{{ row.subject }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ row.error_message|default:'-' }}</td>
+                    <td>{{ row.timestamp }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No email records.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

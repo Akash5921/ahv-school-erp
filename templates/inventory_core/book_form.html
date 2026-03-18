@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Edit Book</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Book</button>
+        <a href="{% url 'inventory_book_list_core' %}">Back</a>
+    </form>
+</div>
+{% endblock %}

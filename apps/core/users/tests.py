@@ -50,20 +50,20 @@ class RoleRoutingTests(TestCase):
             school=self.school,
         )
 
-    def test_superadmin_redirects_to_school_list(self):
+    def test_superadmin_redirects_to_platform_dashboard(self):
         self.client.login(username='routing_superadmin', password='pass12345')
         response = self.client.get(reverse('role_redirect'))
-        self.assertRedirects(response, reverse('school_list'))
+        self.assertRedirects(response, reverse('dashboard_super_admin'))
 
     def test_school_admin_redirects_to_school_dashboard(self):
         self.client.login(username='routing_schooladmin', password='pass12345')
         response = self.client.get(reverse('role_redirect'))
         self.assertRedirects(response, reverse('school_dashboard'))
 
-    def test_non_admin_roles_redirect_to_workspace(self):
+    def test_teacher_redirects_to_teacher_dashboard(self):
         self.client.login(username='routing_teacher', password='pass12345')
         response = self.client.get(reverse('role_redirect'))
-        self.assertRedirects(response, reverse('role_workspace'))
+        self.assertRedirects(response, reverse('dashboard_teacher'))
 
 
 class WorkspaceAccessTests(TestCase):

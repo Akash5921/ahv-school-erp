@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Vendor Management</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Vendor</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Vendors</h3>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>GST</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.vendor_name }}</td>
+            <td>{{ row.phone|default:"-" }}</td>
+            <td>{{ row.email|default:"-" }}</td>
+            <td>{{ row.gst_number|default:"-" }}</td>
+            <td>{{ row.is_active|yesno:"Active,Inactive" }}</td>
+            <td>
+                <a href="{% url 'inventory_vendor_update_core' row.id %}">Edit</a>
+                <form method="post" action="{% url 'inventory_vendor_deactivate_core' row.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Deactivate</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No vendors available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

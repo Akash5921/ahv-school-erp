@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Attendance: {{ student.admission_number }} - {{ student.full_name }}</h3>
+    <form method="get">
+        {{ month_form.as_p }}
+        <button type="submit">Load</button>
+        <a href="{% url 'communication_parent_portal_core' %}">Back</a>
+    </form>
+</div>
+
+<div class="card">
+    <p>Month: {{ month }}/{{ year }}</p>
+    <p>Total Working Days: {{ summary.total_working_days }}</p>
+    <p>Present Days: {{ summary.present_days }}</p>
+    <p>Attendance %: {{ summary.attendance_percentage }}</p>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Class</th>
+                <th>Section</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in records %}
+                <tr>
+                    <td>{{ row.date }}</td>
+                    <td>{{ row.get_status_display }}</td>
+                    <td>{{ row.school_class.name }}</td>
+                    <td>{{ row.section.name }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No attendance records for selected month.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

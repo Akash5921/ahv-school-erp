@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Purchase Tracking</h2>
+    <form method="get" style="margin-bottom:10px;">
+        <label>Session</label>
+        <select name="session" onchange="this.form.submit()">
+            <option value="">All Sessions</option>
+            {% for session in sessions %}
+                <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Record Purchase</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Purchases</h3>
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Invoice</th>
+            <th>Session</th>
+            <th>Vendor</th>
+            <th>Total</th>
+            <th>Created By</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.purchase_date }}</td>
+            <td>{{ row.invoice_number }}</td>
+            <td>{{ row.session.name }}</td>
+            <td>{{ row.vendor.vendor_name }}</td>
+            <td>{{ row.total_amount }}</td>
+            <td>{{ row.created_by.username|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No purchases available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

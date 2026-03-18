@@ -204,14 +204,18 @@ def section_update(request, pk):
 @require_POST
 def section_deactivate(request, pk):
     section = get_object_or_404(Section, pk=pk, school_class__school=request.user.school)
-    section.delete()
-    log_audit_event(
-        request=request,
-        action='academics.section_deactivated',
-        school=request.user.school,
-        target=section,
-        details=f"Section={section.id}",
-    )
+    try:
+        section.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='academics.section_deactivated',
+            school=request.user.school,
+            target=section,
+            details=f"Section={section.id}",
+        )
     return redirect('section_list')
 
 
@@ -371,14 +375,18 @@ def class_subject_update(request, pk):
 @require_POST
 def class_subject_delete(request, pk):
     mapping = get_object_or_404(ClassSubject, pk=pk, school_class__school=request.user.school)
-    log_audit_event(
-        request=request,
-        action='academics.class_subject_deleted',
-        school=request.user.school,
-        target=mapping,
-        details=f"Class={mapping.school_class_id}, Subject={mapping.subject_id}",
-    )
-    mapping.delete()
+    try:
+        mapping.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='academics.class_subject_deleted',
+            school=request.user.school,
+            target=mapping,
+            details=f"Class={mapping.school_class_id}, Subject={mapping.subject_id}",
+        )
     return redirect('class_subject_list')
 
 
@@ -453,14 +461,18 @@ def period_update(request, pk):
 @require_POST
 def period_deactivate(request, pk):
     period = get_object_or_404(Period, pk=pk, school=request.user.school)
-    period.delete()
-    log_audit_event(
-        request=request,
-        action='academics.period_deactivated',
-        school=request.user.school,
-        target=period,
-        details=f"Period={period.period_number}",
-    )
+    try:
+        period.delete()
+    except ValidationError as exc:
+        messages.error(request, '; '.join(exc.messages))
+    else:
+        log_audit_event(
+            request=request,
+            action='academics.period_deactivated',
+            school=request.user.school,
+            target=period,
+            details=f"Period={period.period_number}",
+        )
     return redirect('period_list')
 
 

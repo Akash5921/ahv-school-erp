@@ -25,9 +25,15 @@
             <tr>
                 <th>Staff</th>
                 <th>Basic Salary</th>
+                <th>HRA</th>
+                <th>DA</th>
+                <th>Transport</th>
                 <th>Effective From</th>
-                <th>Allowances</th>
-                <th>Deductions</th>
+                <th>Other Allowances</th>
+                <th>PF</th>
+                <th>ESI</th>
+                <th>Professional Tax</th>
+                <th>Other Deductions</th>
                 <th>Active</th>
             </tr>
         </thead>
@@ -36,14 +42,20 @@
                 <tr>
                     <td>{{ structure.staff.employee_id }} - {{ structure.staff.full_name }}</td>
                     <td>{{ structure.basic_salary }}</td>
+                    <td>{{ structure.hra }}</td>
+                    <td>{{ structure.da }}</td>
+                    <td>{{ structure.transport_allowance }}</td>
                     <td>{{ structure.effective_from }}</td>
-                    <td>{{ structure.allowances }}</td>
-                    <td>{{ structure.deductions }}</td>
+                    <td>{{ structure.other_allowances }}</td>
+                    <td>{{ structure.pf_deduction }}</td>
+                    <td>{{ structure.esi_deduction }}</td>
+                    <td>{{ structure.professional_tax }}</td>
+                    <td>{{ structure.other_deductions }}</td>
                     <td>{% if structure.is_active %}Yes{% else %}No{% endif %}</td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6">No salary structures configured.</td>
+                    <td colspan="12">No salary structures configured.</td>
                 </tr>
             {% endfor %}
         </tbody>

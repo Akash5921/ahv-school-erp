@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Parent Portal Users</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+
+    <h4>Create Parent User</h4>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_parent_user">
+        {{ parent_form.as_p }}
+        <button type="submit">Save Parent User</button>
+    </form>
+
+    <h4>Link Student</h4>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="link_student">
+        {{ link_form.as_p }}
+        <button type="submit">Save Link</button>
+    </form>
+</div>
+
+<div class="card">
+    <h4>Parent Users</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Parent Info</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in parent_users %}
+                <tr>
+                    <td>{{ row.user.username }}</td>
+                    <td>{{ row.parent_info|default:'-' }}</td>
+                    <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No parent users configured.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h4>Parent-Student Links</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Parent</th>
+                <th>Student</th>
+                <th>Primary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in links %}
+                <tr>
+                    <td>{{ row.parent_user.user.username }}</td>
+                    <td>{{ row.student.admission_number }} - {{ row.student.full_name }}</td>
+                    <td>{{ row.is_primary|yesno:'Yes,No' }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No links found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

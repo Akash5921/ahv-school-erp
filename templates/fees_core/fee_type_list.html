@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Fee Type Master</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Fee Type</button>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in fee_types %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.get_category_display }}</td>
+                    <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <a href="{% url 'fee_type_update_core' row.id %}">Edit</a>
+                        {% if row.is_active %}
+                            <form method="post" action="{% url 'fee_type_deactivate_core' row.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No fee types found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Fee Receipt</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <p><strong>Receipt No:</strong> {{ receipt.receipt_number }}</p>
+    <p><strong>Student:</strong> {{ receipt.student.admission_number }} - {{ receipt.student.full_name }}</p>
+    <p><strong>Session:</strong> {{ receipt.session.name }}</p>
+    <p><strong>Installment:</strong> {{ receipt.payment.installment.name }}</p>
+    <p><strong>Payment Date:</strong> {{ receipt.payment.payment_date }}</p>
+    <p><strong>Principal:</strong> {{ receipt.payment.amount_paid }}</p>
+    <p><strong>Fine:</strong> {{ receipt.payment.fine_amount }}</p>
+    <p><strong>Total:</strong> {{ receipt.payment.total_collected }}</p>
+    <p><strong>Status:</strong> {% if receipt.is_cancelled %}Cancelled{% else %}Active{% endif %}</p>
+
+    <a href="{% url 'fee_receipt_pdf_core' receipt.id %}">Download PDF</a>
+    <a href="{% url 'payment_manage_core' %}">Back to Payments</a>
+</div>
+{% endblock %}

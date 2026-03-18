@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>{% if fee_type %}Edit Fee Type{% else %}Create Fee Type{% endif %}</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% url 'fee_type_list_core' %}">Back</a>
+    </form>
+</div>
+{% endblock %}

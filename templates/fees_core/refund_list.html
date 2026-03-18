@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Refund Management</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_refund">
+        {{ form.as_p }}
+        <button type="submit">Create Refund</button>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Student</th>
+                <th>Payment ID</th>
+                <th>Amount</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.refund_date }}</td>
+                    <td>{{ row.student.admission_number }}</td>
+                    <td>{{ row.payment_id }}</td>
+                    <td>{{ row.refund_amount }}</td>
+                    <td>{{ row.reason }}</td>
+                    <td>{% if row.is_reversed %}Reversed{% else %}Active{% endif %}</td>
+                    <td>
+                        {% if not row.is_reversed %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reverse_refund">
+                                <input type="hidden" name="refund_id" value="{{ row.id }}">
+                                <input type="text" name="reason" placeholder="Reason" required>
+                                <button type="submit">Reverse</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8">No refunds found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

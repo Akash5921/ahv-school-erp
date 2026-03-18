@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Edit Announcement</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update</button>
+        <a href="{% url 'communication_announcement_list_core' %}">Back</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Edit Message</h3>
+    <p>Thread: {{ row.thread.subject }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Message</button>
+        <a href="{% url 'communication_thread_detail_core' row.thread_id %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

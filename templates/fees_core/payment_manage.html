@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Collect Fee</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="collect">
+        {{ collection_form.as_p }}
+        <button type="submit">Collect</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Recent Payments</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Student</th>
+                <th>Installment</th>
+                <th>Principal</th>
+                <th>Fine</th>
+                <th>Total</th>
+                <th>Receipt</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in payments %}
+                <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.payment_date }}</td>
+                    <td>{{ row.student.admission_number }}</td>
+                    <td>{{ row.installment.name }}</td>
+                    <td>{{ row.amount_paid }}</td>
+                    <td>{{ row.fine_amount }}</td>
+                    <td>{{ row.total_collected }}</td>
+                    <td>
+                        {% if row.receipt %}
+                            <a href="{% url 'fee_receipt_detail_core' row.receipt.id %}">{{ row.receipt.receipt_number }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{% if row.is_reversed %}Reversed{% else %}Active{% endif %}</td>
+                    <td>
+                        {% if not row.is_reversed %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reverse">
+                                <input type="hidden" name="payment_id" value="{{ row.id }}">
+                                <input type="text" name="reason" placeholder="Reason" required>
+                                <button type="submit">Reverse</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="10">No payments recorded.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

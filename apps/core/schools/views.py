@@ -5,12 +5,11 @@ from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import redirect, render
 
+from apps.dashboard.services import build_school_admin_dashboard_context
 from apps.core.academic_sessions.models import AcademicSession
 from apps.core.academic_sessions.services import activate_session
-from apps.core.academics.models import AcademicConfig, ClassSubject, Period, SchoolClass, Section, Subject
 from apps.core.users.audit import log_audit_event
 from apps.core.users.decorators import role_required
-from apps.core.users.models import AuditLog
 
 from .forms import SchoolOnboardingForm
 from .models import School, SchoolDomain
@@ -19,49 +18,11 @@ from .models import School, SchoolDomain
 @login_required
 @role_required('schooladmin')
 def school_admin_dashboard(request):
-    school = request.user.school
-    user_model = get_user_model()
-
-    users_queryset = user_model.objects.filter(school=school)
-    users_by_role = users_queryset.values('role').annotate(total=Count('id')).order_by('role')
-
-    role_counts = {row['role']: row['total'] for row in users_by_role}
-    sessions = AcademicSession.objects.filter(school=school).order_by('-start_date')
-    domains = SchoolDomain.objects.filter(school=school).order_by('-is_primary', 'domain')
-    current_session = school.current_session
-
-    class_count = 0
-    section_count = 0
-    mapping_count = 0
-    period_count = 0
-    has_config = False
-    if current_session:
-        class_count = SchoolClass.objects.filter(school=school, session=current_session, is_active=True).count()
-        section_count = Section.objects.filter(
-            school_class__school=school,
-            school_class__session=current_session,
-            is_active=True,
-        ).count()
-        mapping_count = ClassSubject.objects.filter(school_class__school=school, school_class__session=current_session).count()
-        period_count = Period.objects.filter(school=school, session=current_session, is_active=True).count()
-        has_config = AcademicConfig.objects.filter(school=school, session=current_session).exists()
-
-    return render(request, 'schools/school_admin_dashboard.html', {
-        'school': school,
-        'total_users': users_queryset.count(),
-        'active_users': users_queryset.filter(is_active=True).count(),
-        'total_subjects': Subject.objects.filter(school=school, is_active=True).count(),
-        'class_count': class_count,
-        'section_count': section_count,
-        'mapping_count': mapping_count,
-        'period_count': period_count,
-        'has_config': has_config,
-        'role_counts': role_counts,
-        'total_sessions': sessions.count(),
-        'active_session': current_session,
-        'domains': domains,
-        'recent_logs': AuditLog.objects.filter(school=school).select_related('user')[:8],
-    })
+    context = build_school_admin_dashboard_context(request.user)
+    context['domains'] = SchoolDomain.objects.filter(
+        school=request.user.school,
+    ).order_by('-is_primary', 'domain')
+    return render(request, 'schools/school_admin_dashboard.html', context)
 
 
 @login_required

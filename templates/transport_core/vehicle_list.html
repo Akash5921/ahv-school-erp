@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Vehicle Management</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Vehicle</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Vehicles</h3>
+    <table>
+        <tr>
+            <th>Vehicle Number</th>
+            <th>Type</th>
+            <th>Capacity</th>
+            <th>Driver</th>
+            <th>Insurance</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.vehicle_number }}</td>
+            <td>{{ row.get_vehicle_type_display }}</td>
+            <td>{{ row.capacity }}</td>
+            <td>{{ row.assigned_driver.name|default:"-" }}</td>
+            <td>{{ row.insurance_expiry|default:"-" }}</td>
+            <td>{{ row.is_active|yesno:"Active,Inactive" }}</td>
+            <td>
+                <a href="{% url 'transport_vehicle_update_core' row.id %}">Edit</a>
+                <form method="post" action="{% url 'transport_vehicle_deactivate_core' row.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Deactivate</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">No vehicles available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Route Management</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_route">
+        {{ route_form.as_p }}
+        <button type="submit">Save Route</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Add Route Stop</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_stop">
+        {{ stop_form.as_p }}
+        <button type="submit">Add Stop</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Routes</h3>
+    <table>
+        <tr>
+            <th>Route</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Vehicle</th>
+            <th>Default Fee</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for row in routes %}
+        <tr>
+            <td>{{ row.route_name }}</td>
+            <td>{{ row.start_point }}</td>
+            <td>{{ row.end_point }}</td>
+            <td>{{ row.vehicle.vehicle_number }}</td>
+            <td>{{ row.default_fee }}</td>
+            <td>{{ row.is_active|yesno:"Active,Inactive" }}</td>
+            <td>
+                <a href="{% url 'transport_route_update_core' row.id %}">Edit</a>
+                <form method="post" action="{% url 'transport_route_deactivate_core' row.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Deactivate</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">No routes available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="card">
+    <h3>Route Stops</h3>
+    <table>
+        <tr>
+            <th>Route</th>
+            <th>Stop</th>
+            <th>Order</th>
+            <th>Action</th>
+        </tr>
+        {% for row in stops %}
+        <tr>
+            <td>{{ row.route.route_name }}</td>
+            <td>{{ row.stop_name }}</td>
+            <td>{{ row.stop_order }}</td>
+            <td>
+                <form method="post" action="{% url 'transport_stop_delete_core' row.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No route stops available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

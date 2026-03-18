@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Ledger</h3>
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+
+    <form method="get">
+        <label>Session</label>
+        <select name="session">
+            <option value="">All</option>
+            {% for s in sessions %}
+                <option value="{{ s.id }}" {% if selected_session and selected_session.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Type</label>
+        <select name="type">
+            <option value="">All</option>
+            {% for key, label in type_choices %}
+                <option value="{{ key }}" {% if selected_type == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Session</th>
+                <th>Type</th>
+                <th>Reference</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Reversed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.date }}</td>
+                    <td>{{ row.session.name }}</td>
+                    <td>{{ row.get_transaction_type_display }}</td>
+                    <td>{{ row.reference_model }} #{{ row.reference_id }}</td>
+                    <td>{{ row.amount }}</td>
+                    <td>{{ row.description|default:'-' }}</td>
+                    <td>{% if row.is_reversed %}Yes{% else %}No{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7">No ledger entries found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
